@@ -4,6 +4,6 @@ title: About
 permalink: /about/
 ---
 
-[leonmavr@tutanota.com](leonmavr@tutanota.com)
+[github](https://github.com/leonmavr)
 
-<https://github.com/leonmavr>
+<mailto:leonmavr@tutanota.com>
