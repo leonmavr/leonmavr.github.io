@@ -3,7 +3,7 @@ layout: post
 title: "Implementing the observer design pattern in a stock market simulation"
 mathjax: true
 categories: cpp 
-tags: cpp
+tag: cpp
 ---
 
 
