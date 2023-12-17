@@ -9,6 +9,11 @@
     {%- include google-analytics.html -%}
   {%- endif -%}
 
+  {% if page.mathjax %}
+    {% include mathjax.html %}
+  {% endif %}
+
   {%- include custom-head.html -%}
+
   
 </head>
