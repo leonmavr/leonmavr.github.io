@@ -42,6 +42,7 @@ layout: base
 {% endfor %}
 </div>
 
+
 {% comment %}list post link for each year{% endcomment %}
 {% assign counts = counts | split: ', ' | reverse %}
 {% assign i = 0 %}
@@ -63,28 +64,4 @@ layout: base
 {% endfor %}
 </div>
 
-
-{% comment %}calculate the post count for each category{% endcomment %}
-{% assign count = "" %}
-{% assign counts = "" %}
-{% for tag in site.categories reversed %}
-  {% for post in tag[1] %}
-	{% assign count = count | plus: 1 %}
-  {% endfor %}
-  {% assign counts = counts | append: count | append: ', ' %}
-  {% assign count = "" %}
-{% endfor %}
-
-{% comment %}show navigation label here{% endcomment %}
-<div class="archive-label-meta" style ="margin-top:25px">
-{% assign i = 0 %}
-{% assign counts = counts | split: ', ' %}
-{% for tag in site.categories reversed  %}
-<ul class="post-categories">       
-     <a href="#{{tag[0]}}" style = "font-family: Raleway,Arial,sans-
-      serif; font-size:14px">{{ tag[0] }} ( {{counts[i]}} )</a>
-</ul>
-{% assign i = i | plus: 1 %}
-{% endfor %}
-</div>
 
