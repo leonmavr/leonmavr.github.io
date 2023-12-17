@@ -1,4 +1,4 @@
-title: Leo's technical notes 
+gitle: Leo's technical notes 
 author:
   name: Leontios Mavropalias
   email: leonmavr@tutanota.com 
@@ -6,8 +6,9 @@ author:
 # The `>` after `description:` means to ignore line-breaks until next key.
 # If you want to omit the line-break after the end of text, use `>-` instead.
 description: >
-Takeaways and interesting problems from a range of topics or projects
-I dabble with. Mainly CS and math-related.
+  Takeaways and interesting problems from a range
+  of topics or projects I dabble with. Mainly CS
+  and math-related.
 
 # Build settings
 
