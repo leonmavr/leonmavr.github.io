@@ -1,118 +1,67 @@
 ---
-layout: default
-refactor: true
+layout: base
 ---
 
-{% include lang.html %}
+<div class="home">
+  {%- if page.title -%}
+    <h1 class="page-heading">{{ page.title }}</h1>
+  {%- endif -%}
 
-{% assign pinned = site.posts | where: 'pin', 'true' %}
-{% assign default = site.posts | where_exp: 'item', 'item.pin != true and item.hidden != true' %}
+  {{ content }}
 
-{% assign posts = '' | split: '' %}
+{% comment %}Calucate the post count for each year{% endcomment %}
+{% assign count = 1 %}
+{% assign year_cnt = "" %}
+{% for post in site.posts reversed %}
+    {% assign year = post.date | date: '%Y' %}
+    {% assign nyear = post.next.date | date: '%Y' %}
+    {% if year != nyear %}
+        {% assign count = count | append: ', ' %}
+        {% assign counts = counts | append: count %}
+		{% assign year_cnt = year_cnt | append: year | append: ', ' %}
+		{% assign years = years | append: year_cnt %}
+		{% assign year_cnt = "" %}
+        {% assign count = 1 %}
+    {% else %}
+        {% assign count = count | plus: 1 %}
+    {% endif %}
+{% endfor %}
 
-<!-- Get pinned posts -->
-
-{% assign offset = paginator.page | minus: 1 | times: paginator.per_page %}
-{% assign pinned_num = pinned.size | minus: offset %}
-
-{% if pinned_num > 0 %}
-  {% for i in (offset..pinned.size) limit: pinned_num %}
-    {% assign posts = posts | push: pinned[i] %}
-  {% endfor %}
-{% else %}
-  {% assign pinned_num = 0 %}
-{% endif %}
-
-<!-- Get default posts -->
-
-{% assign default_beg = offset | minus: pinned.size %}
-
-{% if default_beg < 0 %}
-  {% assign default_beg = 0 %}
-{% endif %}
-
-{% assign default_num = paginator.posts | size | minus: pinned_num %}
-{% assign default_end = default_beg | plus: default_num | minus: 1 %}
-
-{% if default_num > 0 %}
-  {% for i in (default_beg..default_end) %}
-    {% assign posts = posts | push: default[i] %}
-  {% endfor %}
-{% endif %}
-
-<div id="post-list" class="flex-grow-1 px-xl-1">
-  {% for post in posts %}
-    <article class="card-wrapper card">
-      <a href="{{ post.url | relative_url }}" class="post-preview row g-0 flex-md-row-reverse">
-        {% assign card_body_col = '12' %}
-
-        {% if post.image %}
-          {% assign src = post.image.path | default: post.image %}
-          {% unless src contains '//' %}
-            {% assign src = post.img_path | append: '/' | append: src | replace: '//', '/' %}
-          {% endunless %}
-
-          {% assign alt = post.image.alt | xml_escape | default: 'Preview Image' %}
-
-          {% assign lqip = null %}
-
-          {% if post.image.lqip %}
-            {% capture lqip %}lqip="{{ post.image.lqip }}"{% endcapture %}
-          {% endif %}
-
-          <div class="col-md-5">
-            <img src="{{ src }}" alt="{{ alt }}" {{ lqip }}>
-          </div>
-
-          {% assign card_body_col = '7' %}
-        {% endif %}
-
-        <div class="col-md-{{ card_body_col }}">
-          <div class="card-body d-flex flex-column">
-            <h1 class="card-title my-2 mt-md-0">{{ post.title }}</h1>
-
-            <div class="card-text content mt-0 mb-3">
-              <p>
-                {% include no-linenos.html content=post.content %}
-                {{ content | markdownify | strip_html | truncate: 200 | escape }}
-              </p>
-            </div>
-
-            <div class="post-meta flex-grow-1 d-flex align-items-end">
-              <div class="me-auto">
-                <!-- posted date -->
-                <i class="far fa-calendar fa-fw me-1"></i>
-                {% include datetime.html date=post.date lang=lang %}
-
-                <!-- categories -->
-                {% if post.categories.size > 0 %}
-                  <i class="far fa-folder-open fa-fw me-1"></i>
-                  <span class="categories">
-                    {% for category in post.categories %}
-                      {{ category }}
-                      {%- unless forloop.last -%},{%- endunless -%}
-                    {% endfor %}
-                  </span>
-                {% endif %}
-              </div>
-
-              {% if post.pin %}
-                <div class="pin ms-1">
-                  <i class="fas fa-thumbtack fa-fw"></i>
-                  <span>{{ site.data.locales[lang].post.pin_prompt }}</span>
-                </div>
-              {% endif %}
-            </div>
-            <!-- .post-meta -->
-          </div>
-          <!-- .card-body -->
-        </div>
-      </a>
-    </article>
-  {% endfor %}
+{% comment %}show navigation tag here{% endcomment %}
+<div class="archive-label-meta" style ="margin-top:25px">
+{% assign i = 0 %}
+{% comment %} remove the separator. {% endcomment %}
+{% assign counts_year = counts | split: ', ' | reverse %}
+{% assign years = years | split: ', ' %}
+{% for year in years reversed %}
+<ul class="post-categories">       
+     <a href = "#{{year}}" style = "font-family: Raleway,Arial,sans-
+      serif; font-size:14px">{{ year }} ( {{counts_year[i]}} )</a>
+</ul>
+{% assign i = i | plus: 1 %}
+{% endfor %}
 </div>
-<!-- #post-list -->
 
-{% if paginator.total_pages > 1 %}
-  {% include post-paginator.html %}
-{% endif %}
+
+{% comment %}list post link for each year{% endcomment %}
+{% assign counts = counts | split: ', ' | reverse %}
+{% assign i = 0 %}
+{% for post in site.posts %}
+    {% capture year %}{{ post.date | date: '%Y' }}{% endcapture %}
+    {% capture nyear %}{{ post.next.date | date: '%Y' }}{% endcapture %}
+      {% if year != nyear %}
+        <h3 id = "{{year}}" class="archive-title">{{ post.date | date: '%B %Y' }}</h3>
+	  {% assign i = i | plus: 1 %}
+      {% endif %}
+	<div class="archive-meta" style="margin-left:15px;line-height:20px">
+	 <div class="post-date" style="margin-bottom:4px; margin-top:8px; margin-right:30px; font-size:14px; 
+          width:180px"><i class="icon-calendar"></i>{{ post.date | date:
+          "%e %B %Y" }}</div>
+     <a class="post-link" href="{{ post.url | relative_url }}">
+     <h3 class="archive-link" style="font-family: 'Hack', 'Fira Code ', Roboto, monospace; font-size: 16px;"kk>{{ post.title | escape }}</h3>
+     </a>
+   </div>
+{% endfor %}
+</div>
+
+
