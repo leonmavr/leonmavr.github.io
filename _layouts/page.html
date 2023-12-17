@@ -1,5 +1,5 @@
 ---
-layout: base
+layout: default
 ---
 <article class="post">
 
@@ -10,5 +10,11 @@ layout: base
   <div class="post-content">
     {{ content }}
   </div>
+
+  {% if site.comments == true and page.comments != false %}
+    <div class="post-comments">
+      {% include custom_comments_provider.html %}
+    </div>
+  {% endif %}
 
 </article>
