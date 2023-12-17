@@ -1,381 +1,373 @@
-# whiteglass
-
-[![Gem Version](https://badge.fury.io/rb/jekyll-whiteglass.svg)](https://badge.fury.io/rb/jekyll-whiteglass)
-[![CircleCI](https://circleci.com/gh/yous/whiteglass/tree/master.svg?style=shield)](https://circleci.com/gh/yous/whiteglass/tree/master)
-
-Minimal, responsive Jekyll theme for hackers.
-
-![whiteglass theme](screenshot.png)
+<div align="center">
+  <p><em><strong>Disclaimer:</strong> The information here may vary depending on the version you're using.<br/>
+  Please refer to the <code>README.md</code> bundled within the theme-gem for information specific to your version or by pointing
+  your browser to the Git tag corresponding to your version. e.g. https://github.com/jekyll/minima/blob/v2.5.0/README.md.<br/>
+  Running <code>bundle show minima</code> will provide you with the local path to your current theme version.</em></p>
+  <img src="/readme_banner.svg"/>
+  <p>It's Jekyll's default (and first) theme. It's what you get when you run <code>jekyll new</code>.</p>
+  <p><a href="https://jekyll.github.io/minima/">Theme preview</a></p>
+  <p><img src="/screenshot.png"/></p>
+</div>
 
 ## Installation
 
 Add this line to your Jekyll site's Gemfile:
 
-``` ruby
-gem "jekyll-whiteglass"
-```
-
-And add this line to your Jekyll site's `_config.yml`:
-
-``` yaml
-theme: jekyll-whiteglass
+```ruby
+gem "minima"
 ```
 
 And then execute:
 
-``` sh
-bundle
+    $ bundle
+
+
+## Contents At-A-Glance
+
+Minima has been scaffolded by the `jekyll new-theme` command and therefore has all the necessary files and directories to have a new Jekyll site up and running with zero-configuration.
+
+### Layouts
+
+Refers to files within the `_layouts` directory, that define the markup for your theme.
+
+  - `base.html` &mdash; The base layout that lays the foundation for subsequent layouts. The derived layouts inject their
+    contents into this file at the line that says ` {{ content }} ` and are linked to this file via
+    [FrontMatter](https://jekyllrb.com/docs/frontmatter/) declaration `layout: base`.
+  - `home.html` &mdash; The layout for your landing-page / home-page / index-page. [[More Info.](#home-layout)]
+  - `page.html` &mdash; The layout for your documents that contain FrontMatter, but are not posts.
+  - `post.html` &mdash; The layout for your posts.
+
+#### Base Layout
+
+From Minima v3 onwards, the base layout is named **`base.html`** instead of `default.html` to avoid confusing new users into
+assuming that name holds special status.
+
+Users migrating from older versions with customized `_layouts/default.html` are advised to rename their copy to
+`_layouts/base.html`. Migrating users with additional customized layouts may either update front matter references to former
+`default.html` layout or create a new `default.html` layout referencing the current `base.html`, whichever route being the
+easiest:
+
+```
+---
+# new `_layouts/default.html` for backwards-compatibility when multiple
+# layouts have been customized.
+
+layout: base
+---
+
+{{ content }}
 ```
 
-Or install it yourself as:
+#### Home Layout
 
-``` sh
-gem install jekyll-whiteglass
-```
+`home.html` is a flexible HTML layout for the site's landing-page / home-page / index-page. <br/>
 
-## Quick Start
+##### *Main Heading and Content-injection*
 
-1. Go to [yous/whiteglass-template](https://github.com/yous/whiteglass-template).
-2. Click "Use this template" button, and then create a repository.
-3. Change the options defined in _config.yml. See [Configuration](https://github.com/yous/whiteglass-template#configuration)
-   section under whiteglass-template.
-4. Push some content, then GitHub Actions will generate the site.
+From Minima v2.2 onwards, the *home* layout will inject all content from your `index.md` / `index.html` **before** the **`Posts`** heading. This will allow you to include non-posts related content to be published on the landing page under a dedicated heading. *We recommended that you title this section with a Heading2 (`##`)*.
 
-## Manual Setup
+Usually the `site.title` itself would suffice as the implicit 'main-title' for a landing-page. But, if your landing-page would like a heading to be explicitly displayed, then simply define a `title` variable in the document's front matter and it will be rendered with an `<h1>` tag.
 
-1. Generate a new Jekyll blog:
+##### *Post Listing*
 
-   ``` sh
-   jekyll new blog --skip-bundle
-   cd blog
-   ```
+This section is optional from Minima v2.2 onwards.<br/>
+It will be automatically included only when your site contains one or more valid posts or drafts (if the site is configured to `show_drafts`).
 
-2. Edit `Gemfile` to use whiteglass theme:
+The title for this section is `Posts` by default and rendered with an `<h2>` tag. You can customize this heading by defining a `list_title` variable in the document's front matter.
 
-   ``` ruby
-   gem "jekyll-whiteglass"
-   ```
 
-3. Edit `_config.yml` to use whiteglass theme and its plugins:
+### Includes
 
-   ``` yaml
-   theme: jekyll-whiteglass
-   plugins:
-     - jekyll-archives
-     - jekyll-paginate
-     - jekyll-sitemap
+Refers to snippets of code within the `_includes` directory that can be inserted in multiple layouts (and another include-file as well) within the same theme-gem.
 
-   permalink: /:year/:month/:day/:title/
-   paginate_path: /posts/:num/
-   paginate: 5
+  - `disqus_comments.html` &mdash; Code to markup disqus comment box.
+  - `footer.html` &mdash; Defines the site's footer section.
+  - `google-analytics.html` &mdash; Inserts Google Analytics module (active only in production environment).
+  - `head.html` &mdash; Code-block that defines the `<head></head>` in *default* layout.
+  - `custom-head.html` &mdash; Placeholder to allow users to add more metadata to `<head />`.
+  - `header.html` &mdash; Defines the site's main header section. By default, pages with a defined `title` attribute will have links displayed here.
+  - `social.html` &mdash; Renders social-media icons based on the `minima:social_links` data in the config file.
+  - `social-item.html` &mdash; Template to render individual list-item containing graphic link to configured social-profile.
+  - `social-links/*.svg` &mdash; SVG markup components of supported social-icons.
 
-   jekyll-archives:
-     enabled:
-       - categories
-       - tags
-     layout: category_archives
-     permalinks:
-       category: /categories/:name/
-       tag: /tags/:name/
-   ```
 
-4. Copy
-   [`index.html`](https://github.com/yous/whiteglass/blob/master/index.html),
-   [`about.md`](https://github.com/yous/whiteglass/blob/master/about.md),
-   [`archives.md`](https://github.com/yous/whiteglass/blob/master/archives.md),
-   [`feed.xml`](https://github.com/yous/whiteglass/blob/master/feed.xml),
-   [`robots.txt`](https://github.com/yous/whiteglass/blob/master/robots.txt),
-   [`_data/i18n.yml`](https://github.com/yous/whiteglass/blob/master/_data/i18n.yml),
-   and [`_data/navigation.yml`](https://github.com/yous/whiteglass/blob/master/_data/navigation.yml)
-   from the theme:
+### Sass
 
-   ``` sh
-   rm index.md
-   curl -L -O "https://github.com/yous/whiteglass/raw/master/{index.html,about.md,archives.md,feed.xml,robots.txt}"
-   curl -L --create-dirs -o _data/#1 "https://github.com/yous/whiteglass/raw/master/_data/{navigation.yml,i18n.yml}"
-   ```
+Refers to `.scss` files within the `_sass` directory that define the theme's styles.
 
-5. Install gems and you're good to go! The blog will be available on
-   `http://127.0.0.1:4000`.
+  - `minima/skins/classic.scss` &mdash; The "classic" skin of the theme. *Used by default.*
+  - `minima/initialize.scss` &mdash; A component that defines the theme's *skin-agnostic* variable defaults and sass partials.
+    It imports the following components (in the following order):
+    - `minima/custom-variables.scss` &mdash; A hook that allows overriding variable defaults and mixins. (*Note: Cannot override styles*)
+    - `minima/_base.scss` &mdash; Sass partial for resets and defines base styles for various HTML elements.
+    - `minima/_layout.scss` &mdash; Sass partial that defines the visual style for various layouts.
+    - `minima/custom-styles.scss` &mdash; A hook that allows overriding styles defined above. (*Note: Cannot override variables*)
 
-   ``` sh
-   bundle install
-   bundle exec jekyll serve
-   ```
+Refer the [skins](#skins) section for more details.
 
-## Upgrading
 
-### From Versions < 1.9.1
+### Assets
 
-Copy
-[`_data/i18n.yml`](https://github.com/yous/whiteglass/blob/master/_data/i18n.yml)
-from the theme.
+Refers to various asset files within the `assets` directory.
 
-## Deployment to GitHub Pages using Travis CI
+  - `assets/css/style.scss` &mdash; Imports sass files from within the `_sass` directory and gets processed into the theme's
+    stylesheet: `assets/css/styles.css`.
+  - `assets/minima-social-icons.html` &mdash; Imports enabled social-media icon graphic and gets processed into a composite SVG file.
+    Refer [section on social networks](#social-networks) for its usage.
 
-This theme uses [jekyll-archives](https://github.com/jekyll/jekyll-archives) gem
-which is [not supported by GitHub Pages](https://help.github.com/articles/configuring-jekyll-plugins/).
-If you want to use full features like categories and tags, I recommend you to
-use Travis CI or other CI services.
 
-To deploy using Travis CI, first copy the [`.travis.yml`](https://github.com/yous/whiteglass/blob/master/.travis.yml)
-of this repository. You can change `target-branch` (`gh-pages` by default) and
-`on.branch` (`master` by default) as you want. If you want further
-customization, see [Travis CI's documentation page](https://docs.travis-ci.com/user/deployment/pages/).
+### Plugins
 
-You'll see there's `github-token: $GITHUB_TOKEN`, and this is what you should
-configure. Go to your [personal access tokens](https://github.com/settings/tokens)
-page, and generate new token with `public_repo` or `repo` permission as you
-need. Then go to Travis CI's settings page of your repository, and add a new
-environment variable `GITHUB_TOKEN` with the value of the token you generated.
+Minima comes with [`jekyll-seo-tag`](https://github.com/jekyll/jekyll-seo-tag) plugin preinstalled to make sure your website gets the most useful meta tags. See [usage](https://github.com/jekyll/jekyll-seo-tag#usage) to know how to set it up.
+
 
 ## Usage
 
-### Customization
+Have the following line in your config file:
 
-To override the default structure and style of whiteglass, simply create the
-concerned directory at the root of your site, copy the file you wish to
-customize to that directory, and then edit the file. e.g., to override the
-[`_includes/footer_content.html`](_includes/footer_content.html) file to add
-contents to footer, create an `_includes` directory, copy
-`_includes/footer_content.html` from jekyll-whiteglass gem folder to
-`<your-site>/_includes` and start editing that file.
-
-For example, you can add favicons to `_includes/head_custom.html`:
-
-``` html
-<link rel="icon" type="image/x-icon" href="{{ "/favicon.ico" | relative_url }}">
-<link rel="apple-touch-icon" href="{{ "/apple-touch-icon.png" | relative_url }}">
-<link rel="apple-touch-icon" sizes="76x76" href="{{ "/apple-touch-icon-76x76.png" | relative_url }}">
-<link rel="apple-touch-icon" sizes="120x120" href="{{ "/apple-touch-icon-120x120.png" | relative_url }}">
-<link rel="apple-touch-icon" sizes="152x152" href="{{ "/apple-touch-icon-152x152.png" | relative_url }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ "/apple-touch-icon-180x180.png" | relative_url }}">
+```yaml
+theme: minima
 ```
 
-The site's default CSS is in the gem itself,
-[`assets/main.scss`](assets/main.scss). To override the default CSS, the file
-has to exist at your site source. Do either of the following:
 
-- Create a new instance of `main.scss` at site source
-  - Create a new file `main.scss` at `<your-site>/assets/`
-  - Add the frontmatter dashes, and
-  - Add `@import "whiteglass";`, to `<your-site>/assets/main.scss`
-  - Add your custom CSS
-- Download the file from this repo
-  - Create a new file `main.scss` at `<your-site>/assets/`
-  - Copy the contents at [`assets/main.scss`](assets/main.scss) onto the `main.scss` you just created, and edit away
-- Copy directly from jekyll-whiteglass gem
-  - Go to your local jekyll-whiteglass gem installation directory (run `bundle show jekyll-whiteglass` to get the path to it)
-  - Copy the `assets/` folder from there into the root of `<your-site>`
-  - Change whatever values you want, inside `<your-site>/assets/main.scss`
+### Customizing templates
 
-### Locale
+To override the default structure and style of minima, simply create the concerned directory at the root of your site, copy the file you wish to customize to that directory, and then edit the file.
+e.g., to override the [`_includes/head.html `](_includes/head.html) file to specify a custom style path, create an `_includes` directory, copy `_includes/head.html` from minima gem folder to `<yoursite>/_includes` and start editing that file.
 
-`site.lang` is used to declare the primary language for each web page within the
-site.
+The site's default CSS has now moved to a new place within the gem itself, [`assets/css/style.scss`](assets/css/style.scss).
 
-`lang: en-US` sets the `lang` attribute for the site to the United States flavor
-of English, while `en-GB` would be for the United Kingdom style of English.
-Country codes are optional and the shorter variation `lang: en` is also
-acceptable. You may want to write a post in different language, then add `lang`
-attribute to the frontmatter of that post:
+In Minima 3.0, if you only need to customize the colors of the theme, refer to the subsequent section on skins. To have your
+*CSS overrides* in sync with upstream changes released in future versions, you can collect all your overrides for the Sass
+variables and mixins inside a sass file placed at `_sass/minima/custom-variables.scss` and all other overrides inside a sass file
+placed at path `_sass/minima/custom-styles.scss`.
 
-``` yaml
-layout: post
-title: "안녕하세요"
-lang: ko
-```
+You need not maintain entire partial(s) at the site's source just to override a few styles. However, your stylesheet's primary
+source (`assets/css/style.scss`) should contain the following:
 
-The date format and other fixed strings are translated using the `_data/i18n.yml` file. If your language is not yet included, feel free to open a [pull request](https://github.com/yous/whiteglass/pulls).
+  - Front matter dashes at the very beginning (can be empty).
+  - Directive to import a skin.
+  - Directive to import the base styles (automatically loads overrides when available).
 
-### Description
+Therefore, your `assets/css/style.scss` should contain the following at minimum:
 
-`site.description` describes the site. This is mainly used in meta descriptions
-for improving SEO. Also, you can set `description` attribute for each post:
-
-``` yaml
-layout: post
-title: Awesome Post
-description: This is an awesome post.
-```
-
-If you don't specify `post.description`, then `post.excerpt` will be used if it
-exist.
-
-### External URL
-
-`external-url` turns the title of your post to a link. Specify a URL which you
-want to link to.
-
-``` yaml
-layout: post
-title: Jekyll whiteglass theme
-external-url: https://github.com/yous/whiteglass
-```
-
-Then the title of your post would look like a link with text
-`Jekyll whiteglass theme →`. This also applies to your blog feed.
-
-### Category
-
-Each post can have `categories` attribute. It can be a string or an array. This
-will be displayed on index, archive and each post, and provide a link to the
-archive of category.
-
-``` yaml
-layout: post
-title: Awesome Post
-categories: Misc
-```
-
-``` yaml
-layout: post
-title: Another Awesome Post
-categories:
-  - Misc
-  - Idea
-```
-
-### Tag
-
-Each post can have `tags` attribute. It can be a string or an array. This will
-be displayed on index, archive and each post, and provide a link to the archive
-of tag.
-
-``` yaml
-layout: post
-title: Awesome Post
-tags: food
-```
-
-``` yaml
-layout: post
-title: Another Awesome Post
-tags:
-  - food
-  - trip
-```
-
-### Feed
-
-Create `<your-site>/feed.xml` with:
-
-``` yaml
+```sass
 ---
-layout: feed
 ---
+
+@import
+  "minima/skins/{{ site.minima.skin | default: 'classic' }}",
+  "minima/initialize";
 ```
 
-If you want to use another path for feed, you can specify a non-default path via
-your site's config.
+#### Skins
 
-``` yaml
-feed:
-  path: atom.xml
+Minima 3.0 supports defining and switching between multiple color-palettes (or *skins*).
+
+```
+.
+├── minima.scss
+└── minima
+    └── _syntax-highlighting.scss
 ```
 
-Then create `<your-site>/atom.xml` with the same content of `feed.xml` above.
 
-### Comments
+A skin is a Sass file placed in the directory `_sass/minima/skins` and it defines the variable defaults related to the "color"
+aspect of the theme. It also embeds the Sass rules related to syntax-highlighting since that is primarily related to color and
+has to be adjusted in harmony with the current skin.
 
-whiteglass provides the ability to include your favourite commenting service, like [Disqus](https://disqus.com) or [Isso](https://isso-comments.de/).
+The default color palette for Minima is defined within `_sass/minima/skins/classic.scss`. To switch to another available skin,
+simply declare it in the site's config file. For example, to activate `_sass/minima/skins/dark.scss` as the skin, the setting
+would be:
 
-To enable comments on pages and posts:
-1. Overwrite the `_includes/custom_comments_provider.html` with your custom provider of comments.
-2. Add `comments: true` to your `_config.yml`.
-
-To disable comments on certain pages or posts specify `comments: false` in the front matter of the page or post.
-
-### Metadata for SEO
-
-#### Keywords
-
-Each post can have `keywords` attribute. This is a comma-separated list which is
-used in meta descriptions for improving SEO.
-
-``` yaml
-layout: post
-title: How to configure jekyll-whiteglass
-keywords: jekyll, whiteglass, github pages
+```yaml
+minima:
+  skin: dark
 ```
 
-YAML list is also available:
+As part of the migration to support skins, some existing Sass variables have been retired and some **have been redefined** as
+summarized in the following table:
 
-``` yaml
-keywords:
-  - jekyll
-  - whiteglass
-  - github pages
+Minima 2.0      | Minima 3.0
+--------------- | ----------
+`$brand-color`  | `$link-base-color`
+`$grey-*`       | `$brand-*`
+`$orange-color` | *has been removed*
+
+##### Available skins
+
+Skin setting    | Description
+--------------- | -----------
+classic         | Default, light color scheme.
+dark            | Dark variant of the classic skin.
+auto            | *Adaptive skin* based on the default classic and dark skins.
+solarized       | *Adaptive skin* for [solarized](https://github.com/solarized) color scheme skins.
+solarized-light | Light variant of solarized color scheme.
+solarized-dark  | Dark variant of solarized color scheme.
+
+*:bulb: Adaptive skins switch between the "light" and "dark" variants based on the user's operating system setting or browser setting
+(via CSS Media Query [prefers-color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)).*
+
+### Customize navigation links
+
+This allows you to set which pages you want to appear in the navigation area and configure order of the links.
+
+For instance, to only link to the `about` and the `portfolio` page, add the following to your `_config.yml`:
+
+```yaml
+header_pages:
+  - about.md
+  - portfolio.md
 ```
 
-#### Twitter
 
-- `site.twitter_username` sets `twitter:site` and `twitter:creator` meta tag
-- `site.twitter_image` sets `twitter:image:src` meta tag
-- `page.twitter_card.type` sets `twitter:card` meta tag (default: `summary`)
-  - If `page.twitter_card.type` is `gallery`, it sets `twitter:image0`, `twitter:image1`, `twitter:image2` and `twitter:image3` meta tags with `page.twitter_card.image`, `page.twitter_card.image1`, `page.twitter_card.image2` and `page.twitter_card.image3`, respectively
-  - If `page.twitter_card.type` is `photo`, `page.twitter_card.width` sets `twitter:image:width` meta tag and `page.twitter_card.height` sets `twitter:image:height` meta tag
-- `page.twitter_card.creator` sets `twitter:creator` meta tag. It overrides `site.twitter_username`
-- `page.twitter_card.image` sets `twitter:image:src` meta tag if `page.twitter_card.type` is not `gallery`. It overrides `site.twitter_image`
+### Change default date format
 
-#### Facebook
+You can change the default date format by specifying `site.minima.date_format`
+in `_config.yml`.
 
-- `site.facebook_app_id` sets `fb:admins` meta tag
-- `site.facebook_page` sets `article:author` meta tag
-- `site.facebook_image` sets `og:image` meta tag
-- `page.facebook.image` sets `og:image` meta tag. It overrides `site.facebook_image`
-
-### Navigation
-
-To define header links, add titles and URLs under the `main` key in
-`_data/navigation.yml`:
-
-``` yaml
-main:
-  - title: "About"
-    url: /about/
-  - title: "Archives"
-    url: /archives/
-  - title: "GitHub"
-    url: https://github.com/yous/whiteglass
 ```
+# Minima date format
+# refer to http://shopify.github.io/liquid/filters/date/ if you want to customize this
+minima:
+  date_format: "%b %-d, %Y"
+```
+
+
+### Extending the `<head />`
+
+You can *add* custom metadata to the `<head />` of your layouts by creating a file `_includes/custom-head.html` in your source directory. For example, to add favicons:
+
+1. Head over to [https://realfavicongenerator.net/](https://realfavicongenerator.net/) to add your own favicons.
+2. [Customize](#customization) default `_includes/custom-head.html` in your source directory and insert the given code snippet.
+
+
+### Enabling comments (via Disqus)
+
+Optionally, if you have a Disqus account, you can tell Jekyll to use it to show a comments section below each post.
+
+:warning: `url`, e.g. `https://example.com`, must be set in you config file for Disqus to work.
+
+To enable it, after setting the url field, you also need to add the following lines to your Jekyll site:
+
+```yaml
+  disqus:
+    shortname: my_disqus_shortname
+```
+
+You can find out more about Disqus' shortnames [here](https://help.disqus.com/installation/whats-a-shortname).
+
+Comments are enabled by default and will only appear in production, i.e., `JEKYLL_ENV=production`
+
+If you don't want to display comments for a particular post you can disable them by adding `comments: false` to that post's YAML Front Matter.
+
+### Author Metadata
+
+From `Minima-3.0` onwards, `site.author` is expected to be a mapping of attributes instead of a simple scalar value:
+
+```yaml
+author:
+  name: John Smith
+  email: "john.smith@foobar.com"
+```
+
+To migrate existing metadata, update your config file and any reference to the object in your layouts and includes as summarized below:
+
+Minima 2.x    | Minima 3.0
+------------- | -------------------
+`site.author` | `site.author.name`
+`site.email`  | `site.author.email`
+
+
+### Social networks
+
+You can add links to the accounts you have on other sites, with respective icon as an SVG graphic, via the config file.
+From `Minima-3.0` onwards, the social media data is sourced from config key `minima.social_links`. It is a list of key-value pairs, each entry
+corresponding to a link rendered in the footer. For example, to render links to Jekyll GitHub repository and twitter account, one should have:
+
+```yaml
+minima:
+  social_links:
+    - { platform: github,  user_url: "https://github.com/jekyll/jekyll" }
+    - { platform: twitter, user_url: "https://twitter.com/jekyllrb" }
+```
+
+Apart from the necessary keys illustrated above, `title` may also be defined to render a custom link-title. By default, the title is the same
+as `platform`. The `platform` key corresponds to the SVG id of the sprite in the composite file at URL `/assets/minima-social-icons.svg`.
+
+The theme ships with an icon for `rss` and icons of select social-media platforms:
+
+- `devto`
+- `dribbble`
+- `facebook`
+- `flickr`
+- `github`
+- `google_scholar`
+- `instagram`
+- `keybase`
+- `linkedin`
+- `microdotblog`
+- `pinterest`
+- `stackoverflow`
+- `telegram`
+- `twitter`
+- `youtube`
+
+To render a link to a platform not listed above, one should first create a file at path `_includes/social-icons/<PLATFORM>.svg` comprised of
+graphic markup **without the top-level `<svg></svg>`**. The icon is expected to be centered within a viewbox of `"0 0 16 16"`. Then, make an
+entry under key `minima.social_links`.
+
+For example, to render a link to an account of user `john.doe` at platform `deviantart.com`, the steps to follow would be:
+  - Get DeviantArt logo in SVG format.
+  - Using a text-editor, open the downloaded file to inspect if the `viewBox` attribute is defined on the `<svg>` element and is set
+    as `"0 0 16 16" (or similar "square" dimension)`.
+  - If the `viewBox` attribute is non-square or undefined, the graphic *may optionally need* to be edited in a vector graphic editor such as
+    *Inkscape* or *Adobe Illustrator* for properly aligned render on page.
+  - Edit the SVG file in text-editor to delete everything **except** what is contained between `<svg></svg>` and save it into the Jekyll
+    project at path `_includes/social-icons/deviantart.svg`.
+  - Finally, edit the Jekyll config file to enable loading of new icon graphic with:
+    ```yaml
+    minima:
+      social_links:
+        - platform: deviantart  # same as SVG filename.
+          user_url: "https://www.deviantart.com/john.doe"  # URL of profile page.
+          title:  My profile at DeviantArt.com  # Optional. Text displayed on hovering over link.
+    ```
+
+**Notes:**
+- The list of social-links is declarative. List-items are rendered in the order declared in the downstream configuration file and not merged
+  with entries from upstream config file(s) such as theme-config-file or prior local config files.
+- The `user_url` is rendered as given without handling any special characters within.
+
 
 ### Enabling Google Analytics
 
 To enable Google Analytics, add the following lines to your Jekyll site:
 
-``` yaml
-google_analytics: UA-NNNNNNNN-N
+```yaml
+  google_analytics: UA-NNNNNNNN-N
 ```
 
-For Google Analytics 4, add the following lines:
+Google Analytics will only appear in production, i.e., `JEKYLL_ENV=production`
 
-``` yaml
-google_analytics: G-NNNNNNNNNN
+### Enabling Excerpts on the Home Page
+
+To display post-excerpts on the Home Page, simply add the following to your `_config.yml`:
+
+```yaml
+show_excerpts: true
 ```
-
-Replace `N`s with your specific ID.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at
-<https://github.com/yous/whiteglass>. This project is intended to be a safe,
-welcoming space for collaboration, and contributors are expected to adhere to
-the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/jekyll/minima. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## Development
 
-To set up your environment to develop this theme, run `bundle install`.
+To set up your environment to develop this theme, run `script/bootstrap`.
 
-Your theme is setup just like a normal Jekyll site! To test your theme, run
-`bundle exec jekyll serve` and open your browser at
-`http://localhost:4000/whiteglass/`. This starts a Jekyll server using your
-theme. Add pages, documents, data, etc. like normal to test your theme's
-contents. As you make modifications to your theme and to your content, your site
-will regenerate and you should see the changes in the browser after a refresh,
-just like normal.
+To test your theme, run `script/server` (or `bundle exec jekyll serve`) and open your browser at `http://localhost:4000`. This starts a Jekyll server using your theme and the contents. As you make modifications, your site will regenerate and you should see the changes in the browser after a refresh.
 
 ## License
 
-The theme is available as open source under the terms of the
-[MIT License](http://opensource.org/licenses/MIT).
+The theme is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).

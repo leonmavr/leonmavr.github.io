@@ -1,51 +1,67 @@
 ---
-layout: default
+layout: base
 ---
 
 <div class="home">
+  {%- if page.title -%}
+    <h1 class="page-heading">{{ page.title }}</h1>
+  {%- endif -%}
 
   {{ content }}
 
-  {% capture site_lang %}{{ site.lang | default: "en" }}{% endcapture %}
+{% comment %}Calucate the post count for each year{% endcomment %}
+{% assign count = 1 %}
+{% assign year_cnt = "" %}
+{% for post in site.posts reversed %}
+    {% assign year = post.date | date: '%Y' %}
+    {% assign nyear = post.next.date | date: '%Y' %}
+    {% if year != nyear %}
+        {% assign count = count | append: ', ' %}
+        {% assign counts = counts | append: count %}
+		{% assign year_cnt = year_cnt | append: year | append: ', ' %}
+		{% assign years = years | append: year_cnt %}
+		{% assign year_cnt = "" %}
+        {% assign count = 1 %}
+    {% else %}
+        {% assign count = count | plus: 1 %}
+    {% endif %}
+{% endfor %}
 
-  <ul class="post-list">
-    {% for post in paginator.posts %}
-      {% capture post_lang %}{{ post.lang | default: site_lang }}{% endcapture %}
-      {% capture lang %}{% if post_lang != site_lang %}{{ post_lang }}{% endif %}{% endcapture %}
-
-      <li{% if lang != empty %} lang="{{ lang }}"{% endif %}>
-        <header class="post-header">
-          <h1 class="post-title">
-            {% if post.external-url %}
-              <a class="post-link" href="{{ post.external-url }}">{{ post.title | escape }} &rarr;</a>
-            {% else %}
-              <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
-            {% endif %}
-          </h1>
-
-          <p class="post-meta">
-            {% include date.html date=post.date lang=lang %}
-            {% if post.categories != empty or post.tags != empty %}
-              {% include category_links.html categories=post.categories tags=post.tags %}
-            {% endif %}
-            {% if post.external-url %}
-              • <a href="{{ post.url | relative_url }}">Permalink</a>
-            {% endif %}
-          </p>
-        </header>
-
-        <div class="post-content">
-          {{ post.excerpt }}
-        </div>
-        {% if post.content contains site.excerpt_separator %}
-          <p class="post-continue">
-            <a href="{{ post.url | relative_url }}">{% include i18n.html lang=lang value="morelink" default="Read on" %} &rarr;</a>
-          </p>
-        {% endif %}
-      </li>
-    {% endfor %}
-  </ul>
-
-  {% include pagination.html %}
-
+{% comment %}show navigation tag here{% endcomment %}
+<div class="archive-label-meta" style ="margin-top:25px">
+{% assign i = 0 %}
+{% comment %} remove the separator. {% endcomment %}
+{% assign counts_year = counts | split: ', ' | reverse %}
+{% assign years = years | split: ', ' %}
+{% for year in years reversed %}
+<ul class="post-categories">       
+     <a href = "#{{year}}" style = "font-family: Raleway,Arial,sans-
+      serif; font-size:14px">{{ year }} ( {{counts_year[i]}} )</a>
+</ul>
+{% assign i = i | plus: 1 %}
+{% endfor %}
 </div>
+
+
+{% comment %}list post link for each year{% endcomment %}
+{% assign counts = counts | split: ', ' | reverse %}
+{% assign i = 0 %}
+{% for post in site.posts %}
+    {% capture year %}{{ post.date | date: '%Y' }}{% endcapture %}
+    {% capture nyear %}{{ post.next.date | date: '%Y' }}{% endcapture %}
+      {% if year != nyear %}
+        <h3 id = "{{year}}" class="archive-title">{{ post.date | date: '%B %Y' }}</h3>
+	  {% assign i = i | plus: 1 %}
+      {% endif %}
+	<div class="archive-meta" style="margin-left:15px;line-height:20px">
+	 <div class="post-date" style="margin-bottom:4px; margin-top:8px; margin-right:30px; font-size:14px; 
+          width:180px"><i class="icon-calendar"></i>{{ post.date | date:
+          "%e %B %Y" }}</div>
+     <a class="post-link" href="{{ post.url | relative_url }}">
+     <h3 class="archive-link" style="font-family: 'Hack', 'Fira Code ', Roboto, monospace; font-size: 16px;"kk>{{ post.title | escape }}</h3>
+     </a>
+   </div>
+{% endfor %}
+</div>
+
+
