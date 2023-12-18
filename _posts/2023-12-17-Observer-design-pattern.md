@@ -32,7 +32,7 @@ whenever the price changes they're updated.
 More formally, we say that the observer pattern defines a *one-to-many* relationship so that when an object
 changes all its dependents are notified automatically when the state of the subject changes.
 
-<img src="https://raw.githubusercontent.com/leonmavr/leonmavr.github.io/master/_posts/2023-12-17-Observer-design-pattern/obs_one_to_many.png" alt="observer one-to-many" width="70%"/>
+<img src="./2023-12-17-Observer-design-pattern/obs_one_to_many.png" alt="observer one-to-many" width="70%"/>
 
 A concise way to describe the observer is via its UML diagram so before we get into it here's a little
 refresher on UML.
@@ -214,3 +214,20 @@ int main() {
   </tr>
 </table>
 
+For example, the relationship of a shirt having a pocket is composition since a pocket only exists
+in a shirt but the relationship of a car having a wheel is aggregation as a wheel can be removed
+and used by another car.
+
+<img src="./2023-12-17-Observer-design-pattern/set_view_has_a.png" alt="observer one-to-many" width="40%"/>
+
+
+## Observer pattern UML diagram
+
+Let's define the classes this pattern uses:
+* `ISubject` -- the abstract subject (aka subject interface). Defines the abstract attach, detach and notify methods.
+* `Subject` -- The object of interest whose internal state changes we want to observe. It maintains a list of observers and it is able to _attach_ an observer to it,  _detach_ it, or _notify_ all observers. It's able to modify and return the state.
+* `IObserver` -- the observer interface. Defines the abstract _update method.
+* `ConcreteObserverA`, `ConcreteObserverB`, etc. These subclasses of `IObserver` inherit from it and implement the update method. It's also convenient for them to store a reference to `Subject` in order to query its data if necessary.
+
+Strictly speaking, it maintains a list of `IObserver`s and concreted observers, which inherit from `IObserver` are appended to it via the attach method. Due to polymorphism the list can accommodate all subclasses of it. Hence `IObserver` is downcast to the class of the concrete observer. 
+     
