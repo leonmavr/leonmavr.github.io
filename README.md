@@ -13,6 +13,14 @@
 
 Add this line to your Jekyll site's Gemfile:
 
+## Local build
+
+```
+bundle install --path ~/gems/
+bundle install 
+bundle exec jekyll serve
+```
+
 ```ruby
 gem "minima"
 ```
