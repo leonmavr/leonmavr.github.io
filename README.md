@@ -15,8 +15,14 @@ Add this line to your Jekyll site's Gemfile:
 
 ## Local build
 
+Make sure the following are in your bashrc:
+```bash
+export GEM_HOME="$HOME/.gem"
+export GEM_PATH="$HOME/.gem"
+export PATH="$HOME/.gem/bin:$PATH"
 ```
-bundle install --path ~/gems/
+Then you can run:
+```bash
 bundle install 
 bundle exec jekyll serve
 ```
