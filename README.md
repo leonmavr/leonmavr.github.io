@@ -35,6 +35,14 @@ And then execute:
 
     $ bundle
 
+## Local run
+
+From the root directory of this project, run:
+```
+./script/server
+```
+The script will print the IP where the website can be previewed.
+
 
 ## Contents At-A-Glance
 
