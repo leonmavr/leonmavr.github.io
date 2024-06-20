@@ -183,8 +183,8 @@ two lobes. We also assume that the distribution is normalised. Otsu's method see
 separate $C_0$ and $C_1$.
 
 What do "classes" mean in this case? $C_0$ and $C_1$ are not known in advance, they're non-overlapping  and
-each is described by two intensity indices. $C_0$ and $C_1$ are non-overlapping. Otsu aims to separate them
-based on $k$.
+each is described by two intensity indices. Otsu aims to separate them
+based on an intensity $k$ - the upper bound of $C_0$ and lower bound of $C_1$.
 
 After this is done, any histogram intensity $i<k$ gets mapped to $0$ and everything else gets mapped to $255$.
 
@@ -206,7 +206,7 @@ $\omega_0 = Pr(C_0) = \sum\limits_{i=0}^{k-1} p_i = \omega(k)$
 
 $\omega_1 = Pr(C_1) = \sum\limits_{i=k}^{L-1} p_i = 1 - \omega(k)$
 
-The goal is to express the variance of each class in terms of $k$ so we calculate their means first
+The goal is to express the variance of each class in terms of $k$ so we calculate their means first. Each class is treated independently when calculating its means so the conditional probability is used.
 
 $\mu_0 = \sum\limits_{i=0}^{k-1} i \, Pr(i\|C_0)$
 
@@ -239,9 +239,9 @@ $\mu_0\omega_0 + \mu_1\omega_1 = \mu_{tot}$
 
 Now we can begin computing the variance for each class. Each conditional probability can be expanded by Bayes rule just like it was done earlier.
 
-$\sigma_0^2 = \sum\limits_{i=0}^{L-1} (i-\mu_0)^2 Pr(i\|C_0) = \sum\limits_{i=0}^{L-1} (i-\mu_0)^2 p_i/\omega_0$
+$\sigma_0^2 = \sum\limits_{i=0}^{k-1} (i-\mu_0)^2 Pr(i\|C_0) = \sum\limits_{i=0}^{k-1} (i-\mu_0)^2 p_i/\omega_0$
 
-$\sigma_1^2 = \sum\limits_{i=0}^{L-1} (i-\mu_1)^2 Pr(i\|C_1) = \sum\limits_{i=0}^{L-1} (i-\mu_1)^2 p_i/\omega_1$
+$\sigma_1^2 = \sum\limits_{i=k}^{L-1} (i-\mu_1)^2 Pr(i\|C_1) = \sum\limits_{i=k}^{L-1} (i-\mu_1)^2 p_i/\omega_1$
 
 
 <center>
