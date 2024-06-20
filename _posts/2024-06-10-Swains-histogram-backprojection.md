@@ -265,12 +265,12 @@ To maximimise the separability between $C_0$ and $C_1$ and therefore find the op
 **minimise the within-class class variance** and **maximise the between-class variance** $\sigma^2_{between}$.
 However, with a bit of algebra we will show that
 
-$\sigma_{between}^2  + \sigma_{within} = \sigma_{tot} = const$
+$\sigma_{between}^2  + \sigma_{within}^2 = \sigma_{tot}^2 = const$
 
-, where $\sigma_{tot}$ is constant and equal to the total variance of the image. Therefore the minimisation and
-maximisation are equivalent. To prove the latter equation begin with $\sigma_{tot}$.
+, where $\sigma_{tot}^2$ is constant and equal to the total variance of the image. Therefore the minimisation and
+maximisation are equivalent. To prove the latter equation begin with $\sigma_{tot}^2$.
 
-$\sigma_{tot} = \sum\limits_{i=0}^{L-1} (i-\mu_{tot})^2 p_i$
+$\sigma_{tot}^2 = \sum\limits_{i=0}^{L-1} (i-\mu_{tot})^2 p_i$
 
 $\qquad = \underbrace{\sum\limits_{i=0}^{k-1} (i-\mu_{tot})^2 p_i}\_{A} + \underbrace{\sum\limits_{i=k}^{L-1} (i-\mu_{tot})^2 p_i}\_{B}$
 
@@ -278,9 +278,9 @@ $A = \sum\limits_{i=0}^{k-1} (i-\mu_0 + \mu_0 - \mu_{tot})^2 p_i = \sum\limits_{
 
 $B = \sum\limits_{i=k}^{L-1} (i-\mu_1 + \mu_1 - \mu_{tot})^2 p_i = \sum\limits_{i=k}^{L-1}p_i \Big((i-\mu_1)^2 + 2(i-\mu_1)(\mu_1-\mu_{tot}) + (\mu_1 - \mu_{tot})^2\Big)$
 
-Therefore $\sigma_{tot}$ is expanded as
+Therefore $\sigma_{tot}^2$ is expanded as
 
-$\sigma_{tot} = \sum\limits_{i=0}^{k-1}p_i \Big((i-\mu_0)^2 + 2(i-\mu_0)(\mu_0-\mu_{tot}) + (\mu_0 - \mu_{tot})^2\Big) +$
+$\sigma_{tot}^2 = \sum\limits_{i=0}^{k-1}p_i \Big((i-\mu_0)^2 + 2(i-\mu_0)(\mu_0-\mu_{tot}) + (\mu_0 - \mu_{tot})^2\Big) +$
 $\qquad \quad \sum\limits_{i=k}^{L-1}p_i \Big((i-\mu_1)^2 + 2(i-\mu_1)(\mu_1-\mu_{tot}) + (\mu_1 - \mu_{tot})^2\Big)$
 
 Now examine each term.
@@ -290,7 +290,7 @@ Now examine each term.
 * last squared terms: $\sum\limits_{i=0}^{k-1}p_i (\mu_0 - \mu_{tot})^2 + \sum\limits_{i=k}^{L-1}p_i(\mu_1 - \mu_{tot})^2 =$
 $(\mu_0 - \mu_{tot})^2\sum\limits_{i=0}^{k-1}p_i  + (\mu_1 - \mu_{tot})^2\sum\limits_{i=k}^{L-1}p_i = (\mu_0 - \mu_{tot})^2\omega_0 + (\mu_1 - \mu_{tot})^2\omega_1 = \sigma_{between}$
 
-$\therefore \; \sigma_{tot} = \sigma_{within} + \sigma_{between}$
+$\therefore \; \sigma_{tot}^2 = \sigma_{within}^2 + \sigma_{between}^2$
 
 So in the end the objective is to find $k := \text{argmax}(\omega_0\omega_1 (\mu_1 - \mu_0)^2)$.
 This is achieved with a simple iterative search therefore the time complexity of Otsu is $\mathcal{O}(LN)$, where $N$ is the number of pixels.
