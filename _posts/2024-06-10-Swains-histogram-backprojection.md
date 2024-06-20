@@ -248,11 +248,14 @@ $\sigma_1^2 = \sum\limits_{i=0}^{L-1} (i-\mu_1)^2 Pr(i\|C_1) = \sum\limits_{i=0}
 <img src="https://raw.githubusercontent.com/leonmavr/leonmavr.github.io/master/_posts/2024-06-10-Swains-histogram-backprojection/between_within_var.png" alt="betwee-within-class-variance" width="60%"/>
 </center>
 
-The within-class variance (intra-class variance) $\sigma_{within}^2$ within of these two classes is defined as
-the sum of the two variances multiplied by their associated weights (the sum of
-within-class variance of $C_0$ and within-class variance of $C_1$):
+The within-class variance $\sigma_{within}^2$ measures how spread out each class is.
+It's defined as the sum of the two class variances multiplied by their associated weight.
 
 $\sigma_{within}^2 = \omega_0\sigma_0^2 + \omega_1\sigma_1^2$
+
+$ \qquad \quad = \omega_0\sum\limits_{i=0}^{k-1}(i-\mu_0)p_i/\omega_0 + \omega_1\sum\limits_{i=k}^{L-1}(i-\mu_1)p_i/\omega_1$
+
+$ \qquad \quad = \sum\limits_{i=0}^{k-1}(i-\mu_0)p_i + \sum\limits_{i=k}^{L-1}(i-\mu_1)p_i$
 
 We also compute the total "between-class" variance, which measures how far away the lobes are.
 We compute the total between class variation for each class as the difference between the class mean
@@ -284,7 +287,7 @@ $\qquad \quad \sum\limits_{i=k}^{L-1}p_i \Big((i-\mu_1)^2 + 2(i-\mu_1)(\mu_1-\mu
 
 Now examine each term.
 
-* first squared terms: $\sum\limits_{i=0}^{k-1}p_i (i-\mu_0)^2 + \sum\limits_{i=k}^{L-1}p_i (i-\mu_1)^2 = \sigma_0^2 + \sigma_1^2 = \sigma_{within}$
+* first squared terms: $\sum\limits_{i=0}^{k-1}p_i (i-\mu_0)^2 + \sum\limits_{i=k}^{L-1}p_i (i-\mu_1)^2 = \omega_0\sigma_0^2 + \omega_1\sigma_1^2 = \sigma_{within}$
 * cross-product terms: $\sum\limits_{i=0}^{k-1} (i-\mu_0)p_i = 0$ - see the definition of $\mu_0$ $\therefore \; \sum \limits_{i=0}^{k-1} p_i(i-\mu_0)(\mu_0-\mu_{tot}) = \sum \limits_{i=k-1}^{L-1}p_i(i-\mu_1)(\mu_1-\mu_{tot}) = 0$ 
 * last squared terms: $\sum\limits_{i=0}^{k-1}p_i (\mu_0 - \mu_{tot})^2 + \sum\limits_{i=k}^{L-1}p_i(\mu_1 - \mu_{tot})^2 =$
 $(\mu_0 - \mu_{tot})^2\sum\limits_{i=0}^{k-1}p_i  + (\mu_1 - \mu_{tot})^2\sum\limits_{i=k}^{L-1}p_i = (\mu_0 - \mu_{tot})^2\omega_0 + (\mu_1 - \mu_{tot})^2\omega_1 = \sigma_{between}$
@@ -315,6 +318,7 @@ In the original paper, Otsu treats the case of multiple equal peaks but I'll ski
 that case, the implementation outputs the same threshold as OpenCV would. Let's see an output.
 
 ```python
+import cv2
 import numpy as np
 
 np.random.seed(1337)
@@ -333,8 +337,225 @@ image[image >= thresh] = 255
 
 ## 2.6 Implementing Backprojection with Otsu for Object Detection
 
-TODO
+To reiterate, we are given an image `I` and a sample `M` of the object to match. The goal is to obtain
+a new "backprojected" image where the matched object pixels remain the same and everything else is black.
+The steps are:
 
+1. Convert $I$, $M$ from RGB to HSV or another domain.
+2. Compute the ratio histogram.
+3. Replace every colour in the original image with its value on the ratio histogram.
+4. Convolce the latter backprojected image with a disc.
+5. Scale the values from 0 to 255 and apply Otsu's threshold to find a white mask.
+6. bitwise AND the mask with the original image $I$.
+
+All that is implemented below using OpenCV's functions to compute the histogram, Otsu's threshold
+and convolution. The histogram is 2D - the HS of HSV for each image. 
+Not also that the histogram is not divided as $[0,1],[1,2]\ldots,[254,255]$, but it's binned,
+e.g. as $[0,5], [5,10],\ldots,[250,255]$. When using the program, the user is shown an image
+where the object is shown and one or more samples of the object can be selected by drawing one or more
+rectangles and then pressing `c` via the `crop_with_mouse` function. Then it will perform matching
+via backprojection and show the matched result as non-black. To stay true to the authors' rationale
+that backprojection is also used for localisation, the backproject function returns the black and white
+image (mask) and the location (pixel) of the maximum backprojected value. This location can be plotted
+by uncommenting line `cv2.circle(result_image, (locmax[1], locmax[0]), 3, (255, 50, 0), 4)`. However it's
+not helpful for the big objects I'll be matching.
+
+```python
+import cv2
+import numpy as np
+from typing import List
+
+
+def hsv_histogram(image, h_bins=50, s_bins=60, convert_to_hsv=True):
+    if convert_to_hsv:
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    return cv2.calcHist([hsv_image], [0, 1], None, [h_bins, s_bins], [0, 180, 0, 256])
+
+def create_circular_mask(rad):
+    diam = 2*rad
+    mask = np.zeros((diam, diam), dtype=np.float32)
+    y, x = np.ogrid[0:diam, 0:diam]
+    mask[(x-rad)**2 + (y-rad)**2 <= rad**2] = 1
+    # it's important that the mask is normalised otherwise convolution leaks values!
+    mask /= np.sum(mask)
+    return mask
+
+def backproject_multiple(image, models: List[np.ndarray], h_bins=50, s_bins=60):
+    backprojection = np.zeros((image.shape[0], image.shape[1]), dtype=np.float32)
+    image_hist = hsv_histogram(image)
+    model_hist = np.zeros((h_bins, s_bins), np.float32)
+    rad = 0
+    for model in models:
+        model_hist += hsv_histogram(model)
+        rad += min(model.shape[:2])/2
+    rad = int(rad/len(models))
+    model_hist /= len(models)
+    ratio_hist = np.divide(model_hist, np.where(image_hist == 0, 1, image_hist))
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            h_bin_size, s_bin_size = 180/h_bins, 256/s_bins
+            h_val, s_val = int(hsv_image[i, j, 0] / h_bin_size), int(hsv_image[i, j, 1] / s_bin_size)
+            backprojection[i, j] = min(ratio_hist[h_val, s_val], 1)
+    # most likely location of object
+    ind_max = np.argmax(backprojection)
+    loc_max = np.unravel_index(ind_max, backprojection.shape)
+
+    ### Post-processing
+    # normalize backprojection to the range [0, 255]
+    backprojection = cv2.normalize(backprojection, None, 0, 255, cv2.NORM_MINMAX)
+    #rad = min(model.shape[0], model.shape[1]) // 2
+    circular_mask = create_circular_mask(rad)
+    # convolve with circular mask to spread the values around
+    backprojection = cv2.filter2D(backprojection, -1, circular_mask).astype(np.uint8)
+    # Apply Otsu's threshold60 to keep highest values
+    _, backprojection = cv2.threshold(backprojection, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    return backprojection.astype(np.uint8), loc_max
+
+
+def backproject(image, model, h_bins=50, s_bins=60):
+    backprojection = np.zeros((image.shape[0], image.shape[1]), dtype=np.float32)
+    image_hist = hsv_histogram(image)
+    model_hist = hsv_histogram(model)
+    ratio_hist = np.divide(model_hist, np.where(image_hist == 0, 1, image_hist))
+
+    ### b[x,y] = R[Ihsv[x,y]]
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            h_bin_size, s_bin_size = 180/h_bins, 256/s_bins
+            h_val, s_val = int(hsv_image[i, j, 0] / h_bin_size), int(hsv_image[i, j, 1] / s_bin_size)
+            backprojection[i, j] = min(ratio_hist[h_val, s_val], 1)
+    # most likely location of object
+    ind_max = np.argmax(backprojection)
+    loc_max = np.unravel_index(ind_max, backprojection.shape)
+
+    ### Post-processing
+    # normalize backprojection to the range [0, 255]
+    backprojection = cv2.normalize(backprojection, None, 0, 255, cv2.NORM_MINMAX)
+    rad = min(model.shape[0], model.shape[1]) // 2
+    circular_mask = create_circular_mask(rad)
+    # convolve with circular mask to spread the values around
+    backprojection = cv2.filter2D(backprojection, -1, circular_mask).astype(np.uint8)
+    # Apply Otsu's threshold60 to keep highest values
+    _, backprojection = cv2.threshold(backprojection, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    return backprojection.astype(np.uint8), loc_max
+
+def apply_mask(image, backprojection):
+    return cv2.bitwise_and(image, image, mask=backprojection)
+
+
+def crop_with_mouse(image_path):
+    # global variables
+    ref_point = []
+    cropping = False
+    cropped_images = []
+
+    def click_and_crop(event, x, y, flags, param):
+        nonlocal ref_point, cropping
+        # start drawing a rectangle by holding left click
+        if event == cv2.EVENT_LBUTTONDOWN:
+            ref_point = [(x, y)]
+            cropping = True
+        # release left click to finish drawing the rectangle
+        elif event == cv2.EVENT_LBUTTONUP:
+            ref_point.append((x, y))
+            cropping = False
+            # draw a rectangle around the region of interest
+            cv2.rectangle(image, ref_point[0], ref_point[1], (0, 255, 0), 2)
+            cv2.imshow("select area and then press c", image)
+            # crop the region of interest and store it
+            if len(ref_point) == 2:
+                x0, y0 = ref_point[0]
+                x1, y1 = ref_point[1]
+                roi = clone[min(y0, y1):max(y0, y1), min(x0, x1):max(x0, x1)]
+                cropped_images.append(roi)
+                ref_point = []  # reset it for next cropping
+    # load the image, clone it, and setup the mouse callback function
+    image = cv2.imread(image_path)
+    clone = image.copy()
+    cv2.namedWindow("select area and then press c")
+    cv2.setMouseCallback("select area and then press c", click_and_crop)
+
+    while True:
+        # display the image and wait for a keypress
+        cv2.imshow("select area and then press c", image)
+        key = cv2.waitKey(1) & 0xFF
+        # if 'r' is pressed, reset the cropping region
+        if key == ord("r"):
+            image = clone.copy()
+        # if 'c' is pressed, break from the loop
+        elif key == ord("c"):
+            break
+    cv2.destroyAllWindows()
+    return cropped_images
+
+
+if __name__ == '__main__':
+    impath = 'orchids2.jpg'
+    im = cv2.imread(impath)
+    models = crop_with_mouse(impath)
+    if len(models) == 1:
+        model = models[0]
+        backprojection, locmax = backproject(im, model)
+        result_image = apply_mask(im, backprojection)
+        #cv2.circle(result_image, (locmax[1], locmax[0]), 3, (255, 50, 0), 4)
+    else:
+        backprojection, _ = backproject_multiple(im, models)
+        result_image = apply_mask(im, backprojection)
+    cv2.imshow('Backprojection', result_image)
+    cv2.waitKey(10000)
+    cv2.destroyAllWindows()
+```
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Input & drawn sample(s)</th>
+        <th>Output</th>
+    </tr>
+    <tr>
+        <td><img src="https://raw.githubusercontent.com/leonmavr/leonmavr.github.io/master/_posts/2024-06-10-Swains-histogram-backprojection/img/drawn1.jpg" alt="Input Image 1" width="320"></td>
+        <td><img src="https://raw.githubusercontent.com/leonmavr/leonmavr.github.io/master/_posts/2024-06-10-Swains-histogram-backprojection/img/output1.jpg" alt="Output Image 1" width="320"></td>
+    </tr>
+    <tr>
+        <td><img src="https://raw.githubusercontent.com/leonmavr/leonmavr.github.io/master/_posts/2024-06-10-Swains-histogram-backprojection/img/drawn2.jpg" alt="Input Image 2" width="320"></td>
+        <td><img src="https://raw.githubusercontent.com/leonmavr/leonmavr.github.io/master/_posts/2024-06-10-Swains-histogram-backprojection/img/output2.jpg" alt="Output Image 2" width="320"></td>
+    </tr>
+</table>
+Not bad for such a simple algorithm when matching those orchids, right?
+
+# 3. Closing thoughts
+
+Histogram backprojection is used for object matching given a small sample of the object. It only relies on colour and completely ignores spatial information.
+Remember to always convert the input image to a domain that's not susceiptible to illumiation changes before running the algorith, such as HSV. The algorithm
+uses 2D histograms, such as across HS. It may not be as good as flow-based segmentation methods or modern semantic segmentation but it's way simpler to 
+implement and with some optimisations it can work in real time. To improve the algortihm's accuracy, one can stitch together various samples of the same object
+int a supersample (e.g. skin from different humans) and use this.
+
+In this article it was used for object detection -- not recognition. There are a couple of ways the algorithm can be adapted for recognition. One way is by keeping
+a database of models from various objects, performing backprojection with each model $M$, and summing all the values in the backprojected image. The sum with the
+highest value corresponds to the best recognised object. However, for simple recognition we don't even need the backprojection. Again, given a database of models,
+we can compute the histogram $H(M)$ of each and the histogram of the input image $H(I)$. The model with the best match corresponds to the object contained in the
+input image $I$. This method is also described in Swain's paper and the histogram intersection function used there is:
+
+$int(H(I), H(M) = \frac{\sum\limits\_{i=0}^n \min\big(H(I)\_i, H(M)\_i\big)}{\sum\limits\_{i=0}^n H(M)\_i}$
+
+, where $n$ is the number of bins and $i$ each bin. Obviously intersection ranges from 0 to 1.
+This expression may look complicated but if we can scale (downsample) the image histogram to be the same size
+as the model histogram, i.e.
+
+$\sum\limits\_{i=0}^n H(I)\_i = \sum\limits\_{i=0}^n H(M)\_i$
+
+then this intersection expression is simplified to:
+
+$1 - int(H(I), H(M)) = \frac{1}{N}\sum\limits_{i=0}^n \left\|H(I)_i - H(M)_i \right\|$
+
+Why either of these is a good measure of intersection? Make up some good and bad matching histograms, draw them and estimate how close it is to 0 ot 1.
+
+On another note, it may come as a surprise but backprojection is not only good for object matching! There is a way that it can be used with mean shift or other
+methods to build trackers. But that's all for now.
 
 # References
 
+1. [Swain, Michael J. and Dana H. Ballard. "Color indexing." International Journal of Computer Vision 7 (1991): 11-32.](https://engineering.purdue.edu/kak/computervision/ECE661.08/OTSU_paper.pdf)
+2. [Otsu, Nobuyuki. “A Threshold Selection Method from Gray-Level Histograms.” IEEE Trans. Syst. Man Cybern. 9 (1979): 62-66.](https://www.inf.ed.ac.uk/teaching/courses/av/LECTURE_NOTES/swainballard91.pdf)
