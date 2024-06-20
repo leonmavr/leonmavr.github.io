@@ -493,7 +493,6 @@ def crop_with_mouse(image_path):
 
 
 if __name__ == '__main__':
-    # Read the model and input images
     impath = 'orchids.png'
     im = cv2.imread(impath)
     models = crop_with_mouse(impath)
@@ -503,7 +502,6 @@ if __name__ == '__main__':
         result_image = apply_mask(im, backprojection)
         #cv2.circle(result_image, (locmax[1], locmax[0]), 3, (255, 50, 0), 4)
     else:
-        pass
         backprojection, _ = backproject_multiple(im, models)
         result_image = apply_mask(im, backprojection)
     cv2.imwrite('output.png', result_image)
