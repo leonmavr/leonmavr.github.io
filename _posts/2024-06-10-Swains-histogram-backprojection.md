@@ -85,8 +85,7 @@ $R = \frac{H_M}{H_I}$
 To demonstrate what the ratio means for the two images, we will only consider the histogram
 of the red channel. Therefore $H_M$, $H_I$ are 255-length vectors. We will also normalise
 them.
-In general $R$ is a matrix and $M, I$ are never greyscale but to make it intuitive assume
-that they are, then $R$ is a 255-length vector. We will try to understand what the values
+In general, however, $H_M$ and $H_I$ are 2D matrices and they never measure just one channel. We will try to understand what the values
 of $R$ mean.
 
 Let's look at the picture of fruit below, use the pure strawberry as a model and match it with two samples of the image. When computing the histograms, we isolate the R channel of the RBG and obviously the two strawberry histograms look similar. The idea is that the model contains high values in some narrow band. Therefore for the colour tones at the range that describes the model, it will be true that $H_{M_i} > H_{I_i}, \; i \in [0, 255]$ or $R_i = \frac{H_{M_i}}{H_{I_i}} > 1$. In the picture below, histogram intensities are binned every 5, hence the bar charts.
@@ -106,7 +105,7 @@ Therefore every characteristic colour tone $i$ of the model has a high ratio ${M
 
 ## 2.3 Colour spaces
 
-Before the algorithm is introduced, it is important to know that the histogram is never computed from an RGB image. RBG colour space is suceprible to illumination changes therefore the same object can have two different RGB bands in two different illumination conditions. Colour spaces such as HSV or sRBG are preferred. In this case I'll be using HSV. Its components are:
+Before the algorithm is introduced, it is important to know that the histogram is never computed from an RGB image. RBG colour space is susceptible to illumination changes therefore the same object can have two different RGB histograms in two different illumination conditions. Colour spaces such as HSV or sRBG are preferred because they mitigate this. In this case I'll be using HSV. Its components are:
 
 * H (Hue): the perceived colour
 * S (Saturation): How vivid a colour appears relative to its 
@@ -120,7 +119,6 @@ Unlike RGB, which a cubic colour coordinate system, HSB is a cylindrical one whe
 
 Hue and saturation don't change under illumination, that's why HSV is a good space to filter an object's colours.
 The conversion from RGB to HSV involves several steps and the equations are presented [here](https://mattlockyer.github.io/iat455/documents/rgb-hsv.pdf).
-h
 
 ## 2.4 The Histogram Backprojection Algorithm
 
@@ -133,7 +131,7 @@ model image whose histogram describes what we're looking to match.
 First, let's define a function that given two images of the same size, it computes a single backprojection value.
 
 > Compute a single backprojection value <br>
-> Inputs: $I_{m\times n}$, $M_{m\times n}$, some indices $0 \leq i \leq m$, $0 \leq j \leq n$ <br>$
+> Inputs: $I_{m\times n}$, $M_{m\times n}$, some indices $0 \leq i \leq m$, $0 \leq j \leq n$ <br>
 > Output: a scalar from 0 to 1 <br>
 >
 > function $backproject(I, M, i, j)$: <br>
@@ -337,7 +335,7 @@ image[image >= thresh] = 255
 
 ## 2.6 Implementing Backprojection with Otsu for Object Detection
 
-To reiterate, we are given an image `I` and a sample `M` of the object to match. The goal is to obtain
+To reiterate, we are given an image $I$ and a sample $M$ of the object to match. The goal is to obtain
 a new "backprojected" image where the matched object pixels remain the same and everything else is black.
 The steps are:
 
@@ -357,7 +355,7 @@ rectangles and then pressing `c` via the `crop_with_mouse` function. Then it wil
 via backprojection and show the matched result as non-black. To stay true to the authors' rationale
 that backprojection is also used for localisation, the backproject function returns the black and white
 image (mask) and the location (pixel) of the maximum backprojected value. This location can be plotted
-by uncommenting line `cv2.circle(result_image, (locmax[1], locmax[0]), 3, (255, 50, 0), 4)`. However it's
+by uncommenting line `#cv2.circle(result_image, (locmax[1], locmax[0]), 3, (255, 50, 0), 4)`. However it's
 not helpful for the big objects I'll be matching.
 
 ```python
@@ -544,7 +542,7 @@ $int(H(I), H(M) = \frac{\sum\limits\_{i=0}^n \min\big(H(I)\_i, H(M)\_i\big)}{\su
 
 , where $n$ is the number of bins and $i$ each bin. Obviously intersection ranges from 0 to 1.
 This expression may look complicated but if we can scale (downsample) the image histogram to be the same size
-as the model histogram, i.e.
+as the model histogram and then re-normalise it, i.e. if
 
 $\sum\limits\_{i=0}^n H(I)\_i = \sum\limits\_{i=0}^n H(M)\_i$
 
@@ -552,10 +550,10 @@ then this intersection expression is simplified to:
 
 $1 - int(H(I), H(M)) = \frac{1}{N}\sum\limits_{i=0}^n \left\|H(I)_i - H(M)_i \right\|$
 
-Why either of these is a good measure of intersection? Make up some good and bad matching histograms, draw them and estimate how close it is to 0 ot 1.
+Why is either of these a good measure of intersection? Make up some good and bad-matching histograms, draw them and estimate how close the intersection is to 0 or 1.
 
-On another note, it may come as a surprise but backprojection is not only good for object matching! There is a way that it can be used with mean shift or other
-methods to build trackers. But that's all for now.
+On another note, it may come as a surprise but backprojection is not only good for object matching! It can be used as a feature extractor for mean shift or other
+methods to build trackers. They work together surprisingly well and in real time. But that's all for now.
 
 # References
 
