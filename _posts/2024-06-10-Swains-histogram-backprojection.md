@@ -363,7 +363,7 @@ not helpful for the big objects I'll be matching.
 ```python
 import cv2
 import numpy as np
-from typing import List
+from typing import List, Tuple
 
 
 def hsv_histogram(image, h_bins=50, s_bins=60, convert_to_hsv=True):
@@ -408,12 +408,12 @@ def backproject_multiple(image, models: List[np.ndarray], h_bins=50, s_bins=60):
     circular_mask = create_circular_mask(rad)
     # convolve with circular mask to spread the values around
     backprojection = cv2.filter2D(backprojection, -1, circular_mask).astype(np.uint8)
-    # Apply Otsu's threshold60 to keep highest values
+    # Apply Otsu's threshold60 to keep highe values only
     _, backprojection = cv2.threshold(backprojection, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     return backprojection.astype(np.uint8), loc_max
 
 
-def backproject(image, model, h_bins=50, s_bins=60):
+def backproject(image, model, h_bins=50, s_bins=60) -> Tuple:
     backprojection = np.zeros((image.shape[0], image.shape[1]), dtype=np.float32)
     image_hist = hsv_histogram(image)
     model_hist = hsv_histogram(model)
@@ -453,11 +453,11 @@ def crop_with_mouse(image_path):
 
     def click_and_crop(event, x, y, flags, param):
         nonlocal ref_point, cropping
-        # start drawing a rectangle by holding left click
+        # hold left click to start drawoing 
         if event == cv2.EVENT_LBUTTONDOWN:
             ref_point = [(x, y)]
             cropping = True
-        # release left click to finish drawing the rectangle
+        # release left click to stop drawing
         elif event == cv2.EVENT_LBUTTONUP:
             ref_point.append((x, y))
             cropping = False
@@ -470,7 +470,7 @@ def crop_with_mouse(image_path):
                 x1, y1 = ref_point[1]
                 roi = clone[min(y0, y1):max(y0, y1), min(x0, x1):max(x0, x1)]
                 cropped_images.append(roi)
-                ref_point = []  # reset it for next cropping
+                ref_point = []  # Reset ref_point for next cropping
     # load the image, clone it, and setup the mouse callback function
     image = cv2.imread(image_path)
     clone = image.copy()
@@ -487,12 +487,14 @@ def crop_with_mouse(image_path):
         # if 'c' is pressed, break from the loop
         elif key == ord("c"):
             break
+    cv2.imwrite('input.png', image)
     cv2.destroyAllWindows()
     return cropped_images
 
 
 if __name__ == '__main__':
-    impath = 'orchids2.jpg'
+    # Read the model and input images
+    impath = 'orchids.png'
     im = cv2.imread(impath)
     models = crop_with_mouse(impath)
     if len(models) == 1:
@@ -501,8 +503,10 @@ if __name__ == '__main__':
         result_image = apply_mask(im, backprojection)
         #cv2.circle(result_image, (locmax[1], locmax[0]), 3, (255, 50, 0), 4)
     else:
+        pass
         backprojection, _ = backproject_multiple(im, models)
         result_image = apply_mask(im, backprojection)
+    cv2.imwrite('output.png', result_image)
     cv2.imshow('Backprojection', result_image)
     cv2.waitKey(10000)
     cv2.destroyAllWindows()
