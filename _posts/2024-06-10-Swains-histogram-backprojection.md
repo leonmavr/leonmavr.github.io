@@ -285,10 +285,10 @@ $\qquad \quad \sum\limits_{i=k}^{L-1}p_i \Big((i-\mu_1)^2 + 2(i-\mu_1)(\mu_1-\mu
 
 Now examine each term.
 
-* first squared terms: $\sum\limits_{i=0}^{k-1}p_i (i-\mu_0)^2 + \sum\limits_{i=k}^{L-1}p_i (i-\mu_1)^2 = \omega_0\sigma_0^2 + \omega_1\sigma_1^2 = \sigma_{within}$
+* first squared terms: $\sum\limits_{i=0}^{k-1}p_i (i-\mu_0)^2 + \sum\limits_{i=k}^{L-1}p_i (i-\mu_1)^2 = \omega_0\sigma_0^2 + \omega_1\sigma_1^2 = \sigma_{within}^2$
 * cross-product terms: $\sum\limits_{i=0}^{k-1} (i-\mu_0)p_i = 0$ - see the definition of $\mu_0$ $\therefore \; \sum \limits_{i=0}^{k-1} p_i(i-\mu_0)(\mu_0-\mu_{tot}) = \sum \limits_{i=k-1}^{L-1}p_i(i-\mu_1)(\mu_1-\mu_{tot}) = 0$ 
 * last squared terms: $\sum\limits_{i=0}^{k-1}p_i (\mu_0 - \mu_{tot})^2 + \sum\limits_{i=k}^{L-1}p_i(\mu_1 - \mu_{tot})^2 =$
-$(\mu_0 - \mu_{tot})^2\sum\limits_{i=0}^{k-1}p_i  + (\mu_1 - \mu_{tot})^2\sum\limits_{i=k}^{L-1}p_i = (\mu_0 - \mu_{tot})^2\omega_0 + (\mu_1 - \mu_{tot})^2\omega_1 = \sigma_{between}$
+$(\mu_0 - \mu_{tot})^2\sum\limits_{i=0}^{k-1}p_i  + (\mu_1 - \mu_{tot})^2\sum\limits_{i=k}^{L-1}p_i = (\mu_0 - \mu_{tot})^2\omega_0 + (\mu_1 - \mu_{tot})^2\omega_1 = \sigma_{between}^2$
 
 $\therefore \; \sigma_{tot}^2 = \sigma_{within}^2 + \sigma_{between}^2$
 
@@ -406,7 +406,7 @@ def backproject_multiple(image, models: List[np.ndarray], h_bins=50, s_bins=60):
     circular_mask = create_circular_mask(rad)
     # convolve with circular mask to spread the values around
     backprojection = cv2.filter2D(backprojection, -1, circular_mask).astype(np.uint8)
-    # Apply Otsu's threshold60 to keep highe values only
+    # Apply Otsu's threshold to keep highe values only
     _, backprojection = cv2.threshold(backprojection, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     return backprojection.astype(np.uint8), loc_max
 
