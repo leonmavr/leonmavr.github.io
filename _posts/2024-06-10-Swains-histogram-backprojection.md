@@ -160,7 +160,7 @@ $\quad$ return $b$
 
 $*$ denotes convolution and $D_r$ is a disc of radius $r$, so it's defined as:
 
-$D_r = $ <br>
+$$D_r = $$ <br>
 
 $$ \begin{array}{ll}
       1, \quad x^2+y^2<r^2 \\
