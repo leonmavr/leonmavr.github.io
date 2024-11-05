@@ -857,7 +857,7 @@ small fluctuations in the training data. High variance means that a model is ove
 
 
 <img
-src="https://raw.githubusercontent.com/leonmavr/leonmavr.github.io/4019db2150594b86158abe6d7d98910e72acfb49/_posts/2024-09-30-Kinect-and-tof/bias-variance-targets.png"
+src="https://github.com/leonmavr/leonmavr.github.io/blob/master/_posts/2024-09-30-Kinect-and-tof/bias-variance-targets.png?raw=true"
 alt="Description of image" height="350">
 
 <small><b>Fig. 12.</b> Bias and variance visualised. [9]</small>
