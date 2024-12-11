@@ -792,7 +792,7 @@ To make it easier to remember, here's the UML diagram of a typical singleton (cr
 
 <img src="https://raw.githubusercontent.com/leonmavr/leonmavr.github.io/refs/heads/master/_posts/2024-12-05-Singleton/singleton_uml_wiki.jpg" alt="" width="40%"/>
 
-4. Summary
+# 4. Summary
 
 | **Aspect**          | **Pros**                                                                                     | **Cons**                                                                                   |
 |----------------------|---------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
