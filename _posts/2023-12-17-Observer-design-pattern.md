@@ -474,3 +474,178 @@ In the end, the two observers report their updates and the bot additionally make
   Bot says: NVDA's tomorrow price will be 476.77 with RSI = 68 --> HOLD
   Bot says: GOOG's tomorrow price will be 163.90 with RSI = 24 --> BUY
 ```
+
+# 5. Simplified Observer Code in C++17
+
+{% raw %}
+```cpp
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <deque>
+#include <ctime>
+#include <cstdlib>
+#include <algorithm>
+#include <unordered_map>
+#include <cmath>
+#include <functional>
+#include <string>
+
+// Subject: StockMarket with callback-based observers
+class StockMarket {
+public:
+    using Callback = std::function<void(const std::string&, double)>;
+
+    StockMarket() = delete;
+    explicit StockMarket(std::unordered_map<std::string, double> prices)
+        : pairs_(std::move(prices)) {}
+
+    // Register a listener (observer)
+    void AddListener(Callback cb) {
+        listeners_.push_back(std::move(cb));
+    }
+
+    // Simulate a change in the state variable and notify observers
+    void UpdatePrices() {
+        for (auto &pair : pairs_) {
+            auto price = pair.second;
+            pair.second += 0.03 * price * (rand() % 100 - 40) / 100;
+        }
+        NotifyListeners();
+    }
+
+    const std::unordered_map<std::string, double> &pairs() const {
+        return pairs_;
+    }
+
+private:
+    void NotifyListeners() {
+        for (auto &cb : listeners_) {
+            for (const auto &pair : pairs_) {
+                cb(pair.first, pair.second);
+            }
+        }
+    }
+
+    std::unordered_map<std::string, double> pairs_;
+    std::vector<Callback> listeners_;
+};
+
+// Concrete observer A: Investor
+class Investor {
+public:
+    Investor(std::string name, StockMarket &stock_market)
+        : name_(std::move(name)), stock_market_(stock_market) {
+        stock_market_.AddListener(
+            [this](const std::string &stockSymbol, double price) {
+                OnPriceUpdate(stockSymbol, price);
+            });
+    }
+
+    void OnPriceUpdate(const std::string &stockSymbol, double price) {
+        std::cout << "\tInvestor " << name_ << " received update: "
+                  << stockSymbol << " price is " << std::fixed
+                  << std::setprecision(1) << price << std::endl;
+    }
+
+private:
+    std::string name_;
+    StockMarket &stock_market_;
+};
+
+// Concrete observer B: Bot
+class Bot {
+public:
+    explicit Bot(StockMarket &stock_market)
+        : stock_market_(stock_market), hist_length_(7) {
+        // init history with current prices
+        for (const auto &pair : stock_market_.pairs()) {
+            const auto &symbol = pair.first;
+            const auto price = pair.second;
+            std::deque<double> price_copies;
+            for (unsigned i = 0; i < hist_length_; ++i)
+                price_copies.push_back(price);
+            price_history_[symbol] = std::move(price_copies);
+        }
+
+        // subscribe to stock market updates
+        stock_market_.AddListener(
+            [this](const std::string &ticker, double price) {
+                OnPriceUpdate(ticker, price);
+            });
+    }
+
+    void OnPriceUpdate(const std::string &ticker, double price) {
+        std::cout << "\tBot received an update of " << price << " on "
+                  << ticker << " ticker" << std::endl;
+        auto it = price_history_.find(ticker);
+        if (it != price_history_.end()) {
+            it->second.pop_front();
+            it->second.push_back(price);
+        }
+    }
+
+    // predict next price, estimate a technical indicator, suggest buy/sell/hold
+    void Predict(const std::string &ticker) {
+        std::cout << "\tBot says: " << ticker << "'s tomorrow price will be ";
+        auto it = price_history_.find(ticker);
+        if (it != price_history_.end()) {
+            const auto &prices = it->second;
+            double prediction = 0.0;
+            for (auto p : prices)
+                prediction += p;
+            prediction /= prices.size();
+            prediction += rand() % 20 - 5;
+
+            std::cout << std::fixed << std::setprecision(2)
+                      << prediction << " with RSI = ";
+
+            auto max_it = std::max_element(prices.begin(), prices.end());
+            auto min_it = std::min_element(prices.begin(), prices.end());
+            double max = *max_it;
+            double min = *min_it;
+            double curr = prices.back();
+            int rsi_perc = static_cast<int>(
+                std::round((curr - min) / (max - min + 0.0001) * 100));
+
+            std::string suggestion = "HOLD";
+            if (rsi_perc > 70)
+                suggestion = "SELL";
+            else if (rsi_perc < 30)
+                suggestion = "BUY";
+
+            std::cout << rsi_perc << " --> " << suggestion << std::endl;
+        }
+    }
+
+private:
+    StockMarket &stock_market_;
+    std::unordered_map<std::string, std::deque<double>> price_history_;
+    std::size_t hist_length_;
+};
+
+int main() {
+    // Create an instance of the subject (stock market)
+    std::unordered_map<std::string, double> trading_pairs =
+        {{"GOOG", 150}, {"NVDA", 470}, {"AAPL", 180}};
+    StockMarket stock_market(trading_pairs);
+
+    // Create observers; they self-register via callbacks
+    Investor investor("Alice", stock_market);
+    Bot bot(stock_market);
+
+    // Simulate changes in stock prices
+    srand(static_cast<unsigned>(time(nullptr)));
+    for (int ndays = 20, i = 0; i < ndays; ++i) {
+        if (i > 5) { // wait for some samples
+            std::cout << "-------- day " << i << " --------" << std::endl;
+            stock_market.UpdatePrices();
+            for (const auto &pair : stock_market.pairs())
+                bot.Predict(pair.first);
+        }
+    }
+
+    return 0;
+}
+```
+{% endraw %}
