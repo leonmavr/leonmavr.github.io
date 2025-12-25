@@ -500,11 +500,10 @@ of a pointer to an observer. The management of listeners is external instead of 
 #include <functional>
 #include <string>
 
-// Subject: StockMarket with callback-based observers
+// Subject with callback-based observers
 class StockMarket {
 public:
     using Callback = std::function<void(const std::string&, double)>;
-
     StockMarket() = delete;
     explicit StockMarket(std::unordered_map<std::string, double> prices)
         : pairs_(std::move(prices)) {}
@@ -513,7 +512,6 @@ public:
     void AddListener(Callback cb) {
         listeners_.push_back(std::move(cb));
     }
-
     // Simulate a change in the state variable and notify observers
     void UpdatePrices() {
         for (auto &pair : pairs_) {
@@ -522,7 +520,6 @@ public:
         }
         NotifyListeners();
     }
-
     const std::unordered_map<std::string, double> &pairs() const {
         return pairs_;
     }
@@ -550,7 +547,6 @@ public:
                 OnPriceUpdate(stockSymbol, price);
             });
     }
-
     void OnPriceUpdate(const std::string &stockSymbol, double price) {
         std::cout << "\tInvestor " << name_ << " received update: "
                   << stockSymbol << " price is " << std::fixed
@@ -576,7 +572,6 @@ public:
                 price_copies.push_back(price);
             price_history_[symbol] = std::move(price_copies);
         }
-
         // subscribe to stock market updates
         stock_market_.AddListener(
             [this](const std::string &ticker, double price) {
@@ -605,10 +600,8 @@ public:
                 prediction += p;
             prediction /= prices.size();
             prediction += rand() % 20 - 5;
-
             std::cout << std::fixed << std::setprecision(2)
                       << prediction << " with RSI = ";
-
             auto max_it = std::max_element(prices.begin(), prices.end());
             auto min_it = std::min_element(prices.begin(), prices.end());
             double max = *max_it;
@@ -616,13 +609,11 @@ public:
             double curr = prices.back();
             int rsi_perc = static_cast<int>(
                 std::round((curr - min) / (max - min + 0.0001) * 100));
-
             std::string suggestion = "HOLD";
             if (rsi_perc > 70)
                 suggestion = "SELL";
             else if (rsi_perc < 30)
                 suggestion = "BUY";
-
             std::cout << rsi_perc << " --> " << suggestion << std::endl;
         }
     }
