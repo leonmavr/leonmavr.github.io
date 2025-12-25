@@ -304,9 +304,9 @@ class ISubject {
 public:
     virtual void AttachObserver(std::shared_ptr<IObserver> investor) = 0;
     virtual void DetachObserver(std::shared_ptr<IObserver> investor) = 0;
-    virtual void NotifyObservers() = 0;
     virtual ~ISubject() = default;
 protected:
+    virtual void NotifyObservers() = 0;
     std::vector<std::shared_ptr<IObserver>> observers_;
 };
 
@@ -327,14 +327,6 @@ public:
             observers_.erase(it);
     }
 
-    void NotifyObservers() override {
-        for (auto observer : observers_) {
-            for (const auto& pair: pairs_) {
-                observer->Update(pair.first, pair.second);
-            }
-        }
-    }
-
     // Simulate a change in the state variable and notify observers
     void UpdatePrices() {
         for (auto& pair: pairs_) {
@@ -346,6 +338,15 @@ public:
 
     std::unordered_map<std::string, double> pairs() const {
         return pairs_;
+    }
+
+protected:
+    void NotifyObservers() override {
+        for (auto observer : observers_) {
+            for (const auto& pair: pairs_) {
+                observer->Update(pair.first, pair.second);
+            }
+        }
     }
 
 private:
@@ -539,7 +540,7 @@ private:
     std::vector<Callback> listeners_;
 };
 
-// Concrete observer A: Investor
+// observer A: Investor
 class Investor {
 public:
     Investor(std::string name, StockMarket &stock_market)
@@ -561,7 +562,7 @@ private:
     StockMarket &stock_market_;
 };
 
-// Concrete observer B: Bot
+// observer B: Bot
 class Bot {
 public:
     explicit Bot(StockMarket &stock_market)
