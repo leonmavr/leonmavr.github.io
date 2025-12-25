@@ -477,6 +477,14 @@ In the end, the two observers report their updates and the bot additionally make
 
 # 5. Simplified Observer Code in C++17
 
+1. In C++ 17 and later, in the subject we can push a callback (`std::function`) as a listener (observer) instead
+of a pointer to an observer. The management of listeners is external instead of shared between the subject and the listeners.
+2. This way, we don't need a `DetachObserver` method anymore, since we manage callbacks on-the-go.
+3. The need to design abstract classes is pretty much eliminated this way.
+4. Listners are registered (`AddListner`) on the constructor of each listener by passing their update (`OnPriceUpdate`) method as a lambda.
+5. Listeners now do not want to call their udpate method on their own (hence `listeners_.push_back(std::move(cb));`). Instead, it's called by `UpdatePrices`, which in turn calls `NotifyListeners`, which calls the callback (`OnPriceUpdate`) they registered:  
+`UpdatePrices` [subject] -> `NotifyListeners` [subject] -> `OnPriceUpdate` [listener].
+
 {% raw %}
 ```cpp
 #include <iostream>
