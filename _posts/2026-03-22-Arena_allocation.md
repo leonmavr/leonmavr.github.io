@@ -153,8 +153,8 @@ old base        |
  new base   ----- aligned offset 
 ```      
 
-The question is, given a current offset, to find its aligned offset and we can
-do this with binary operations.
+The question is, given a current offset, how can we  find its aligned offset and 
+do this with binary operations?
 
 The steps are:
 
@@ -216,15 +216,14 @@ When a block fills:
 
 The head always points at the first block. In multi-block areanas, we iterate for space linearly. To avoid this linear iteration, we can optionally introduce a `tail` pointer (not implemented here for simplicity).
 
-# Full working code for multi-block arena
+# Multi-block arena implementation
 
 ```c
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> // malloc, free
 #include <stdint.h> // SIZE_MAX, uintptr_t
-#include <stddef.h>
+#include <stddef.h> // max_align_t, _Alignof, size_t
 
-// Helper macro to check allocation results and clean up the arena on failure.
 #define CHECK_ALLOC(ptr, arena_ptr) \
   do { if (!(ptr)) { arena_destroy(arena_ptr); return 1; } } while (0)
 
@@ -287,7 +286,6 @@ void* arena_alloc(Arena* arena, size_t size, size_t alignment) {
         uintptr_t aligned = (current_ptr + alignment - 1) & ~(alignment - 1);
         // relative to base
         size_t new_offset = (aligned - (uintptr_t)current_arena->base) + size;
-
         if (new_offset <= current_arena->capacity) {
           current_arena->offset = new_offset;
           return (void*)aligned;
@@ -307,12 +305,10 @@ void* arena_alloc(Arena* arena, size_t size, size_t alignment) {
                 }
                 next_capacity *= 2;
             }
-
             current_arena->next = arena_create(next_capacity);
             if (!current_arena->next)
               return NULL;
         }
-
         current_arena = current_arena->next;
     }
     return NULL;
@@ -331,15 +327,13 @@ int main(int argc, char *argv[])
   CHECK_ALLOC(data1, arena);
   Data* data2 = (Data*)arena_alloc(arena, sizeof(Data), _Alignof(Data));
   CHECK_ALLOC(data2, arena);
-  *data1 = (Data) {. name = "Alice", .id = 41};
-  *data2 = (Data) {. name = "Bob", .id = 42}; 
+  *data1 = (Data) {.name = "Alice", .id = 41};
+  *data2 = (Data) {.name = "Bob",   .id = 42}; 
 
-  // generic block of data - max_align_t aligns safely all types of
+  // generic block of data - max_align_t aligns safely all types
   void* big = arena_alloc(arena, 80, _Alignof(max_align_t));
   CHECK_ALLOC(big, arena);
 
-  // no need to free the data
-  //arena_reset(arena);
   Data* data3 = (Data*)arena_alloc(arena, sizeof(Data), _Alignof(Data));
 
   CHECK_ALLOC(data3, arena);
@@ -354,16 +348,24 @@ int main(int argc, char *argv[])
   data5->name = "Now in next block";
   data5->id = 44;
 
-  // if you want to debug conveniently, uncomment below and set a bp
-  int set_breakpoint_here = 0;
+  // overwrite all previous data
+  arena_reset(arena); 
+  Data* data6 = (Data*)arena_alloc(arena, sizeof(Data), _Alignof(Data));
+  data6->name = "Now in base block";
+  data6->id = 45;
+
   arena_destroy(arena);
   return 0;
 }
 ```
 
----
 
 # Debugging
+
+By compiling with the `-g` flag, setting breakpoints at `arena_reset(arena)` and `arena_destroy(arena)`, we can inspect
+how the blocks have been formed and what gets allocated at each block. The capacity of the block is 16 and the size of each `Data` structure is 16.
+After allocating the first two `Data` structure we occpupy 32/64 bytes, so by allocating a `void*` block of data of size 80, we would fill the head block. the `void*` gets allocated to arena `arena->next` and so on. After resetting the arena, we 
+return to offset 0 of the head block. This is confirmed by `gdb`:
 
 ```
 (gdb) p *(Data*)((char*)arena->base + (arena->offset - 3*sizeof(Data)))
@@ -378,7 +380,11 @@ $4 = {name = 0x555555556026 "Snoop Dog", id = 420}
 $13 = {name = 0x555555556044 "Now in next block", id = 44}
 (gdb) p arena->next->offset - (80 + sizeof(Data))
 $16 = 0
+(gdb) p *(Data*)((char*)arena->base + (arena->offset - 1*sizeof(Data)))
+$17 = {name = 0x555555556056 "Now in first block", id = 45}
 ```
+
+In summary:
 
 ```
 sizeof data = 16
@@ -390,6 +396,6 @@ next block: 80/128
 after data3: 48/64
 after data4: 64/64
 after data5: base block full => search in next block -> 96/128
-
-Note that offset is set as `arena->offset = (aligned - base) + size`
+after reset: base block 0/64
+after data6: 16/64
 ```
