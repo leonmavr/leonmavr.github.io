@@ -23,7 +23,7 @@ private:
      // do stuff
   }
 ```
-That's it! We hooked the managed into each entity.
+That's it! We hooked the manager into each entity.
 
 The next is easier and it involves the implementation of each entity's `Die()` calling `on_die_()`, given that the latter is already referring to the sprite manager. This is step **(2)** in the diagram and it's  achieved by the following lines:
 
