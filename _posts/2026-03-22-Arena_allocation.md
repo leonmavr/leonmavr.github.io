@@ -175,9 +175,9 @@ size_t new_offset = (aligned - (uintptr_t)arena->base) + size;
 ```
 
 
-## 5. Growing Arenas (Multi-Block Arenas)
+## 5. Multi-Block Arenas
 
-A fixed-size arena fails when the offset reaches the capacity. To address this, we use growing arenas.
+A fixed-size arena fails when the offset reaches the capacity. To address this, we use growing (multi-block) arenas.
 The blueprint is as follows:
 
 ```c
