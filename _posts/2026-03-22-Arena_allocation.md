@@ -6,7 +6,6 @@ Its biggest advantage is the you don't need to allocate memory multiple times (a
 by asking the OS for space in memory pages), nor free multiple times, relieving the programmer from the concern of freeing
 each variable individually. Everything is cleared/freed at once by resetting/destroying the arena.
 
----
 
 ## 1. Core Idea
 
@@ -18,15 +17,13 @@ An arena allocator works as follows:
   - Return memory at the current pointer.
   - Advance the pointer by the requested size (plus alignment padding).
   - Optionally: if the pointer exceeds the capacity, create and point to the next block.
-- Deallocation:
-  - Memory is released in bulk by resetting the current pointer or destroying the arena.
+- Deallocation: memory is released in bulk by resetting the current pointer or destroying the arena.
 
 Because allocation simply advances a pointer, this is often called a **bump allocator**.
 Allocation cost is obviously O(1).
 
----
 
-# 2. The arena block data structure
+## 2. The arena data structure
 
 Conceptually, the minimal structure the arena looks like:
 
@@ -49,9 +46,8 @@ This offset is with respect to the arena base - it is not an absolute address.
 Therefore there are no per-allocation metadata, no block splitting or merging and
 no linksed list/tree structures. Allocation is purely sequential.
 
----
 
-# 3. Schematic view
+## 3. Schematic view
 
 You can imagine the arena memory as one large buffer. Initially:
 
@@ -79,14 +75,9 @@ After allocating another 32 bytes:
 base                            offset = 48
 ```
 
-Each allocation:
+Each allocation: returns a void pointer at `base + offset` and advances `offset` by the allocation size.
 
-1. Returns a void pointer at `base + offset`
-2. Advances `offset` by the allocation size
-
----
-
-# 4. Alignment Handling
+## 4. Alignment Handling
 
 Allocations must respect alignment requirements. Arena allocators allow the allocation of arbitrary numbers of bytes
 (as long as the new size doesn't exceed the capacity).
@@ -132,25 +123,17 @@ entire "row" of the pointer as reserved and advance it
                 |
 old base        |
    ^            |
-   |     1064   v         1072
-   +-------+-+-+-+-+-+-+-+-+
-           |X|X|X| | | | | |
-           +-+-+-+-+-+-+-+-+
-           | | | | | | | | |
-           +-+-+-+-+-+-+-+-+
-         1072             1080
-       
-       
-        1064              1072
-           +-+-+-+-+-+-+-+-+
-           |X|X|X|X|X|X|X|X|
-           +-+-+-+-+-+-+-+-+
-           | | | | | | | | |
-   +-------+-+-+-+-+-+-+-+-+
-   |    1072^             1080
-   |        |
-   v        |
- new base   ----- aligned offset 
+   |     1064   v         1071     1064             1071
+   +-------+-+-+-+-+-+-+-+-+         +-+-+-+-+-+-+-+-+
+           |X|X|X| | | | | |         |X|X|X|X|X|X|X|X|
+           +-+-+-+-+-+-+-+-+         +-+-+-+-+-+-+-+-+
+           | | | | | | | | |         | | | | | | | | |
+           +-+-+-+-+-+-+-+-+         +-+-+-+-+-+-+-+-+
+         1072             1079   1072^              1079
+                                     |
+                                     +----- aligned offset
+                                     |
+                                     +----- new base
 ```      
 
 The question is, given a current offset, how can we  find its aligned offset and 
@@ -184,17 +167,15 @@ In C:
 uintptr_t aligned = (current + alignment - 1) & ~(alignment - 1);
 ```
 
-
-3. We ended up in the beginning of the current row, which should be 
+4. We ended up in the beginning of the current row, which should be 
    reserved. Therefore shift the offset to the beginning of the next row:
 
 ```
 size_t new_offset = (aligned - (uintptr_t)arena->base) + size;
 ```
 
----
 
-# 5. Growing Arenas (Multi-Block Arenas)
+## 5. Growing Arenas (Multi-Block Arenas)
 
 A fixed-size arena fails when the offset reaches the capacity. To address this, we use growing arenas.
 The blueprint is as follows:
@@ -214,9 +195,9 @@ When a block fills:
 - Then we create a next block, which is referenced by the `next` node of the current one.
 - Then we check if there's enough capacity in the new block and either write to this block (and advance the current pointer to `(aligned - base) + size`) or repeat creating a new one.
 
-The head always points at the first block. In multi-block areanas, we iterate for space linearly. To avoid this linear iteration, we can optionally introduce a `tail` pointer (not implemented here for simplicity).
+The head always points at the first block. In multi-block areanas, we iterate for space linearly. To avoid this linearty, we can optionally introduce a `tail` pointer (not implemented here for simplicity).
 
-# Multi-block arena implementation
+## 6. Multi-block arena implementation
 
 ```c
 #include <stdio.h>
@@ -271,7 +252,6 @@ void arena_destroy(Arena* arena) {
     }
 }
 
-// Allocate memory from arena
 void* arena_alloc(Arena* arena, size_t size, size_t alignment) {
     if (!arena || alignment == 0 || (alignment & (alignment - 1)) != 0) {
         return NULL;
@@ -360,12 +340,12 @@ int main(int argc, char *argv[])
 ```
 
 
-# Debugging
+## 7. Inspecting the arena
 
 By compiling with the `-g` flag, setting breakpoints at `arena_reset(arena)` and `arena_destroy(arena)`, we can inspect
-how the blocks have been formed and what gets allocated at each block. The capacity of the block is 16 and the size of each `Data` structure is 16.
+how the blocks have been filled and what block each variable gets assigned to. The capacity of the first block is 64 and the size of each `Data` structure is 16.
 After allocating the first two `Data` structure we occpupy 32/64 bytes, so by allocating a `void*` block of data of size 80, we would fill the head block. the `void*` gets allocated to arena `arena->next` and so on. After resetting the arena, we 
-return to offset 0 of the head block. This is confirmed by `gdb`:
+return to offset 0 of the head block. This is confirmed by inspecting it with `gdb`:
 
 ```
 (gdb) p *(Data*)((char*)arena->base + (arena->offset - 3*sizeof(Data)))
@@ -389,9 +369,10 @@ In summary:
 ```
 sizeof data = 16
 capacity of base block = 64
+-----------------------------
 after data1: 16/64
 after data2: 32/64
-after big: 80 > 64 - 32 => we need a next block of capacity 128
+after big: 80 > 64 - 32 => we allocate it in the next block, of capacity 128
 next block: 80/128
 after data3: 48/64
 after data4: 64/64
